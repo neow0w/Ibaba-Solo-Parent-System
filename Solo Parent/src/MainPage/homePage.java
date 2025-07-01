@@ -1,6 +1,7 @@
 package MainPage;
 
 import homePage.*;
+
 import java.awt.*;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.event.ActionEvent;
@@ -13,6 +14,12 @@ import java.time.format.TextStyle;
 import java.util.Calendar;
 import java.util.Locale;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import JDBC.Database;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -20,33 +27,38 @@ import javax.swing.table.TableCellRenderer;
 
 public class homePage extends JPanel {
 
-	private static final long serialVersionUID = 1L;
-	private JTable summaryTable;
-	private JLabel checkPlanner;
-	private JLabel newMember;
-	private JTable recentWorksTable;
-	private final JLabel monthLabel;
-	private final Calendar calendar;
+    private static final long serialVersionUID = 1L;
+    private JTable summaryTable;
+    private JLabel checkPlanner;
+    private JLabel newMember;
+    private JTable recentWorksTable;
+    private final JLabel monthLabel;
+    private final Calendar calendar;
+    private JLabel totalNumber;
+    private JLabel totalMale;
+    private JLabel totalFemale;
+    private JPanel recentWorksPanel;
+    private JPanel summarytablePanel;
 
-	public homePage() {
-		setLayout(null);
+    public homePage() {
+        setLayout(null);
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(new Color(238, 235, 235));
         calendar = Calendar.getInstance();
         
-        JPanel activityPanel = new RoundedPanel() ;
+        JPanel activityPanel = new RoundedPanel();
         activityPanel.setBounds(30, 15, 755, 365);
         add(activityPanel);
         activityPanel.setLayout(null);
         
         JLabel SummaryTXT = new JLabel("Summary of Future Activities");
-        SummaryTXT.setBounds(80, 10, 287, 47);
+        SummaryTXT.setBounds(80, 12, 287, 30);
         SummaryTXT.setFont(new Font("Tahoma", Font.PLAIN, 22));
         activityPanel.add(SummaryTXT);
         
         JPanel activityTopBar = new RoundedPanel();
         activityTopBar.setBounds(21, 65, 713, 36);
-        activityTopBar.setBackground(new Color( 255, 64, 169));
+        activityTopBar.setBackground(new Color(255, 64, 169));
         activityPanel.add(activityTopBar);
         activityTopBar.setLayout(null);
         
@@ -59,96 +71,103 @@ public class homePage extends JPanel {
         JLabel date = new JLabel("DATE\r\n");
         date.setForeground(Color.BLACK);
         date.setFont(new Font("Tahoma", Font.BOLD, 16));
-        date.setBounds(240, 10, 54, 13);
+        date.setBounds(210, 10, 54, 13);
         activityTopBar.add(date);
         
         JLabel budget = new JLabel("BUDGET\r\n");
         budget.setForeground(Color.BLACK);
         budget.setFont(new Font("Tahoma", Font.BOLD, 16));
-        budget.setBounds(400, 10, 72, 13);
+        budget.setBounds(385, 10, 72, 13);
         activityTopBar.add(budget);
         
         JLabel status = new JLabel("STATUS");
         status.setForeground(Color.BLACK);
         status.setFont(new Font("Tahoma", Font.BOLD, 16));
-        status.setBounds(575, 10, 72, 13);
+        status.setBounds(560, 10, 72, 13);
         activityTopBar.add(status);
         
-        JPanel summarytablePanel = new RoundedPanel();
+        summarytablePanel = new RoundedPanel();
         summarytablePanel.setBounds(21, 111, 713, 207);
         summarytablePanel.setLayout(null);
-        summarytablePanel.setBackground(new Color(255,255,255));
+        summarytablePanel.setBackground(new Color(255, 255, 255));
         activityPanel.add(summarytablePanel);
         
-        String[][] data = {
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-        };
-
-        String[] columns = {"", "", "", ""};
-        
-        DefaultTableModel expModel = new DefaultTableModel(data,columns);
-        
-
-        summaryTable = new JTable(expModel) {
-        	@Override
-        	public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-        		Component c = super.prepareRenderer(renderer, row, column);
-        		JTextArea area = new JTextArea(getValueAt(row, column).toString());
-        		area.setLineWrap(true);
-        		area.setWrapStyleWord(true);
-        		area.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        		area.setBackground(Color.WHITE);
-        		area.setBorder(BorderFactory.createEmptyBorder(5, 20, 10, 10));
-        		if (column == 3) {
-        			if (getValueAt(row, column).toString().equalsIgnoreCase("Approved")) {
-        				area.setForeground(Color.decode("#ff4fc3")); 
-        			} else {
-        				area.setForeground(Color.GRAY);
-        			}
-        		}
-        		return area;
-        	}
-        	@Override
+        summaryTable = new JTable(new DefaultTableModel(new String[]{"Title", "Date", "Fund", "Status"}, 0)) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                JTextArea area = new JTextArea(getValueAt(row, column).toString());
+                area.setLineWrap(true);
+                area.setWrapStyleWord(true);
+                area.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                area.setBackground(Color.WHITE);
+                area.setBorder(BorderFactory.createEmptyBorder(5, 20, 10, 10));
+                if (column == 3) {
+                    if (getValueAt(row, column).toString().equalsIgnoreCase("Approved")) {
+                        area.setForeground(Color.decode("#ff4fc3"));
+                    } else {
+                        area.setForeground(Color.GRAY);
+                    }
+                }
+                return area;
+            }
+            @Override
             public boolean isCellEditable(int row, int column) {
-               return false;
+                return false;
             }
         };
-        summaryTable.setRowHeight(65);
+        summaryTable.setRowHeight(67);
         summaryTable.setShowGrid(false);
-        summaryTable.setIntercellSpacing(new Dimension(30, 5));
+        summaryTable.setIntercellSpacing(new Dimension(20, 5));
+        summaryTable.getColumnModel().getColumn(0).setPreferredWidth(250);
+        summaryTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        summaryTable.getColumnModel().getColumn(2).setPreferredWidth(150);
+        summaryTable.getColumnModel().getColumn(3).setPreferredWidth(150);
         summaryTable.setTableHeader(null);
-
         summaryTable.setBounds(3, 3, 705, 200);
-        
-        summarytablePanel.add(summaryTable); 
+        summarytablePanel.add(summaryTable);
+
+        DefaultTableModel expModel = fetchPlannerActivities();
+        if (expModel.getRowCount() > 0 && !expModel.getValueAt(0, 2).equals("No Planned Activities So Far")) {
+            summaryTable.setModel(expModel);
+        } else {
+            JLabel noActivityLabel = new JLabel("No Planned Activities So Far");
+            noActivityLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+            noActivityLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            noActivityLabel.setVerticalAlignment(SwingConstants.CENTER);
+            noActivityLabel.setBounds(0, 0, 713, 207);
+            summarytablePanel.add(noActivityLabel);
+            summarytablePanel.remove(summaryTable);
+        }
         
         JButton seeAllButton = new JButton("See All");
         seeAllButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				seeAllActivityPage seeAll = new seeAllActivityPage();
-				mainPage.instance.showDim();
-				seeAll.setLocationRelativeTo(null);
-				seeAll.setVisible(true);
-			}
-		});
+            public void actionPerformed(ActionEvent e) {
+                seeAllActivityPage seeAll = new seeAllActivityPage();
+                mainPage.instance.showDim();
+                seeAll.setLocationRelativeTo(null);
+                seeAll.setVisible(true);
+            }
+        });
         seeAllButton.setFont(new Font("Tahoma", Font.BOLD, 14));
         seeAllButton.setBounds(330, 325, 82, 20);
         seeAllButton.setBorderPainted(false);
         seeAllButton.setContentAreaFilled(false);
         seeAllButton.setFocusPainted(false);
         seeAllButton.setOpaque(true);
-        seeAllButton.setBackground(new Color(238,235,235));
-        seeAllButton.setForeground(new Color(0,0,0));
-        
+        seeAllButton.setBackground(new Color(238, 235, 235));
+        seeAllButton.setForeground(new Color(0, 0, 0));
         activityPanel.add(seeAllButton);
         
         ImageIcon sumLogo = new ImageIcon(homePage.class.getResource("/imgs/summary.png"));
         JLabel summaryLogo = new JLabel(sumLogo);
         summaryLogo.setBounds(25, 15, 40, 40);
         activityPanel.add(summaryLogo);
+        
+        JLabel summaryDescription = new JLabel("List of activities this year");
+        summaryDescription.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        summaryDescription.setBounds(81, 38, 200, 13);
+        activityPanel.add(summaryDescription);
         
         JPanel recentWorkPanel = new RoundedPanel();
         recentWorkPanel.setBounds(30, 390, 755, 280);
@@ -176,50 +195,38 @@ public class homePage extends JPanel {
         dateModified.setBounds(419, 10, 139, 13);
         recentHeader.add(dateModified);
         
-        JPanel recentWorksPanel = new RoundedPanel();
+        recentWorksPanel = new RoundedPanel();
         recentWorksPanel.setBackground(new Color(238, 235, 235));
         recentWorksPanel.setBounds(20, 106, 713, 165);
         recentWorksPanel.setLayout(null);
         recentWorkPanel.add(recentWorksPanel);
         
-        String[][] data1 = {
-                {"1","Wheelchair Distributional", "June 11, 2025"},
-                {"2","Solo Parent ID Printing", "June 14, 2025"},
-                {"3","Medical Assistance Day", "June 23, 2025"},
-                {"4","New Members Orientation", "June 27, 2025"},
-            };
-
-            String[] columns1 = {"", "", ""};
-            
-            DefaultTableModel model = new DefaultTableModel(data1, columns1); 
-            	
-            recentWorksTable = new JTable(model) {
-                @Override
-                public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-                	Component c = super.prepareRenderer(renderer, row, column);
-                	JTextArea area = new JTextArea(getValueAt(row, column).toString());
-                	area.setLineWrap(true);
-                	area.setWrapStyleWord(true);
-                	area.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-                	area.setBackground(new Color(238,235,235));
-                	area.setBorder(BorderFactory.createEmptyBorder(15, 40, 10, 10));
-                	if (column == 3) {
-                		if (getValueAt(row, column).toString().equalsIgnoreCase("Approved")) {
-                			area.setForeground(new Color(255, 64, 169)); 
-                		} else {
-                			area.setForeground(Color.GRAY);
-                		}
-                	}
-                	return area;
+        recentWorksTable = new JTable(new DefaultTableModel(new String[]{"", "", ""}, 0)) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                JTextArea area = new JTextArea(getValueAt(row, column).toString());
+                area.setLineWrap(true);
+                area.setWrapStyleWord(true);
+                area.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                area.setBackground(new Color(238, 235, 235));
+                area.setBorder(BorderFactory.createEmptyBorder(15, 40, 10, 10));
+                if (column == 3) {
+                    if (getValueAt(row, column).toString().equalsIgnoreCase("Approved")) {
+                        area.setForeground(new Color(255, 64, 169));
+                    } else {
+                        area.setForeground(Color.GRAY);
+                    }
                 }
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                   return false;
-                }
-            };
-            
+                return area;
+            }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         recentWorksTable.setRowHeight(55);
-      	recentWorksTable.getColumnModel().getColumn(0).setPreferredWidth(10);
+        recentWorksTable.getColumnModel().getColumn(0).setPreferredWidth(10);
         recentWorksTable.getColumnModel().getColumn(1).setPreferredWidth(210);
         recentWorksTable.getColumnModel().getColumn(2).setPreferredWidth(240);
         recentWorksTable.setShowGrid(false);
@@ -228,25 +235,43 @@ public class homePage extends JPanel {
         recentWorksTable.setForeground(Color.BLACK);
         recentWorksTable.setBounds(3, 3, 705, 155);
         recentWorksPanel.add(recentWorksTable);
-        
+
         JScrollPane scrollPane = new JScrollPane(recentWorksTable);
-        scrollPane.setBounds(3, 3, 705, 155); 
+        scrollPane.setBounds(3, 3, 705, 155);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         styleScrollBar(scrollPane);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            
         recentWorksPanel.add(scrollPane);
+
+        DefaultTableModel model = fetchRecentWorks();
+        if (model.getRowCount() > 0 && !model.getValueAt(0, 1).equals("No Recent Works So Far")) {
+            recentWorksTable.setModel(model);
+        } else {
+            JLabel noRecentWorksLabel = new JLabel("No Recent Works So Far");
+            noRecentWorksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+            noRecentWorksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            noRecentWorksLabel.setVerticalAlignment(SwingConstants.CENTER);
+            noRecentWorksLabel.setBounds(0, 0, 713, 165);
+            recentWorksPanel.add(noRecentWorksLabel);
+            recentWorksPanel.remove(recentWorksTable); 
+            recentWorksPanel.remove(scrollPane); 
+        }
         
         JLabel recentWorks = new JLabel("Recent Works\r\n");
         recentWorks.setFont(new Font("Tahoma", Font.PLAIN, 22));
-        recentWorks.setBounds(80, 13, 148, 47);
+        recentWorks.setBounds(80, 10, 148, 30);
         recentWorkPanel.add(recentWorks);
         
         ImageIcon recLogo = new ImageIcon(homePage.class.getResource("/imgs/recent.png"));
         JLabel recentLogo = new JLabel(recLogo);
         recentLogo.setBounds(25, 15, 40, 40);
         recentWorkPanel.add(recentLogo);
+        
+        JLabel recentDescription = new JLabel("List of done activities this month ");
+        recentDescription.setFont(new Font("Tahoma", Font.PLAIN, 14));
+        recentDescription.setBounds(80, 38, 300, 13);
+        recentWorkPanel.add(recentDescription);
         
         JPanel notifPanel = new RoundedPanel();
         notifPanel.setBounds(799, 120, 510, 287);
@@ -294,13 +319,13 @@ public class homePage extends JPanel {
         checkPlannerBTN.add(plannerLogo);
         
         checkPlannerBTN.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				checkPlanner planner = new checkPlanner();
-				mainPage.instance.showDim();
-				planner.setLocationRelativeTo(null);
-				planner.setVisible(true);
-			}
-		});
+            public void actionPerformed(ActionEvent e) {
+                checkPlanner planner = new checkPlanner();
+                mainPage.instance.showDim();
+                planner.setLocationRelativeTo(null);
+                planner.setVisible(true);
+            }
+        });
         
         RoundedPanel newMemberAddedPanel = new RoundedPanel();
         newMemberAddedPanel.setLayout(null);
@@ -343,13 +368,13 @@ public class homePage extends JPanel {
         notifPanel.add(notifLogo);
         
         newMemberBTN.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				newMember member = new newMember();
-				mainPage.instance.showDim();
-				member.setLocationRelativeTo(null);
-				member.setVisible(true);
-			}
-		});
+            public void actionPerformed(ActionEvent e) {
+                newMember member = new newMember();
+                mainPage.instance.showDim();
+                member.setLocationRelativeTo(null);
+                member.setVisible(true);
+            }
+        });
         
         JPanel totalmemberPanel = new RoundedPanel();
         totalmemberPanel.setBackground(new Color(39, 39, 39));
@@ -378,7 +403,7 @@ public class homePage extends JPanel {
         solo_parent_date.setBounds(13, 37, 93, 13);
         totalmemberPanel.add(solo_parent_date);
         
-        JLabel totalNumber = new JLabel("87");
+        totalNumber = new JLabel("0");
         totalNumber.setHorizontalAlignment(SwingConstants.CENTER);
         totalNumber.setFont(new Font("Tahoma", Font.PLAIN, 100));
         totalNumber.setForeground(new Color(255, 255, 255));
@@ -417,7 +442,7 @@ public class homePage extends JPanel {
         genderLine1.setBounds(0, 155, 250, 2);
         genderPanel.add(genderLine1);
         
-        JLabel totalMale = new JLabel("44");
+        totalMale = new JLabel("0");
         totalMale.setHorizontalAlignment(SwingConstants.CENTER);
         totalMale.setFont(new Font("Tahoma", Font.BOLD, 60));
         totalMale.setForeground(new Color(4, 220, 251));
@@ -430,7 +455,7 @@ public class homePage extends JPanel {
         male.setBounds(145, 125, 67, 26);
         genderPanel.add(male);
         
-        JLabel totalFemale = new JLabel("43");
+        totalFemale = new JLabel("0");
         totalFemale.setHorizontalAlignment(SwingConstants.CENTER);
         totalFemale.setForeground(new Color(255, 64, 169));
         totalFemale.setFont(new Font("Tahoma", Font.BOLD, 60));
@@ -477,74 +502,243 @@ public class homePage extends JPanel {
         updateMonthLabel();
         datePanel.add(day);
         
-	}
-	
-	private void updateMonthLabel() {
+        int[] genderCounts = fetchGenderCounts();
+        totalNumber.setText(String.valueOf(genderCounts[0]));
+        totalMale.setText(String.valueOf(genderCounts[1]));
+        totalFemale.setText(String.valueOf(genderCounts[2]));
+        
+        Timer refreshTimer = new Timer(0, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshDashboardData(); 
+            }
+        });
+        refreshTimer.setRepeats(true);
+        refreshTimer.start();
+    }
+    
+    public void refreshDashboardData() {
+        int[] genderCounts = fetchGenderCounts();
+        totalNumber.setText(String.valueOf(genderCounts[0]));
+        totalMale.setText(String.valueOf(genderCounts[1]));
+        totalFemale.setText(String.valueOf(genderCounts[2]));
+
+        DefaultTableModel expModel = fetchPlannerActivities();
+        summaryTable.setModel(expModel); 
+        if (expModel.getRowCount() == 0 || expModel.getValueAt(0, 2).equals("No Planned Activities So Far")) {
+            JLabel noActivityLabel = new JLabel("No Planned Activities So Far");
+            noActivityLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+            noActivityLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            noActivityLabel.setVerticalAlignment(SwingConstants.CENTER);
+            noActivityLabel.setBounds(0, 0, 713, 207);
+            summarytablePanel.add(noActivityLabel);
+            summarytablePanel.remove(summaryTable);
+        } else {
+            summarytablePanel.removeAll(); 
+            summarytablePanel.add(summaryTable);
+            summaryTable.setBounds(3, 3, 705, 200);
+        }
+
+        DefaultTableModel model = fetchRecentWorks();
+        recentWorksTable.setModel(model); 
+        if (model.getRowCount() == 0 || model.getValueAt(0, 1).equals("No Recent Works So Far")) {
+            JLabel noRecentWorksLabel = new JLabel("No Recent Works So Far");
+            noRecentWorksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+            noRecentWorksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            noRecentWorksLabel.setVerticalAlignment(SwingConstants.CENTER);
+            noRecentWorksLabel.setBounds(0, 0, 713, 165);
+            recentWorksPanel.add(noRecentWorksLabel);
+            recentWorksPanel.remove(recentWorksTable);
+            recentWorksPanel.remove(recentWorksPanel.getComponent(1)); 
+        } else {
+            recentWorksPanel.removeAll(); 
+            recentWorksPanel.add(recentWorksTable);
+            recentWorksTable.setBounds(3, 3, 705, 155);
+            JScrollPane scrollPane = new JScrollPane(recentWorksTable);
+            scrollPane.setBounds(3, 3, 705, 155);
+            scrollPane.setBorder(BorderFactory.createEmptyBorder());
+            styleScrollBar(scrollPane);
+            scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            recentWorksPanel.add(scrollPane);
+        }
+        revalidate();
+        repaint();
+    }
+    
+    private void updateMonthLabel() {
         monthLabel.setText(new SimpleDateFormat("MMMM dd, yyyy").format(calendar.getTime()));
     }
-	
-	private void styleScrollBar(JScrollPane scrollPane) {
-	    JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
-	    verticalScrollBar.setUI(new BasicScrollBarUI() {
-	        @Override
-	        protected void configureScrollBarColors() {
-	            this.thumbColor = new Color(150, 150, 150); 
-	            this.thumbDarkShadowColor = new Color(150, 150, 150);
-	            this.thumbHighlightColor = new Color(150, 150, 150);
-	            this.thumbLightShadowColor = new Color(150, 150, 150);
-	            this.trackColor = new Color(245, 245, 245); 
-	        }
+    
+    private void styleScrollBar(JScrollPane scrollPane) {
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setUI(new BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = new Color(150, 150, 150);
+                this.thumbDarkShadowColor = new Color(150, 150, 150);
+                this.thumbHighlightColor = new Color(150, 150, 150);
+                this.thumbLightShadowColor = new Color(150, 150, 150);
+                this.trackColor = new Color(245, 245, 245);
+            }
 
-	        @Override
-	        protected JButton createDecreaseButton(int orientation) {
-	            return createZeroButton();
-	        }
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
 
-	        @Override
-	        protected JButton createIncreaseButton(int orientation) {
-	            return createZeroButton();
-	        }
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
 
-	        private JButton createZeroButton() {
-	            JButton button = new JButton();
-	            button.setPreferredSize(new Dimension(0, 0));
-	            button.setMinimumSize(new Dimension(0, 0));
-	            button.setMaximumSize(new Dimension(0, 0));
-	            return button;
-	        }
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
 
-	        @Override
-	        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
-	            Graphics2D g2 = (Graphics2D) g.create();
-	            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-	            g2.setPaint(thumbColor);
-	            g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, 10, 10);
-	            g2.dispose();
-	        }
-	        
-	    });
+            @Override
+            protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(thumbColor);
+                g2.fillRoundRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, 10, 10);
+                g2.dispose();
+            }
+        });
 
-	    verticalScrollBar.setPreferredSize(new Dimension(8, Integer.MAX_VALUE));
-	    verticalScrollBar.setOpaque(false);
-	    scrollPane.setOpaque(false);
-	    scrollPane.getViewport().setOpaque(false);
-	}
+        verticalScrollBar.setPreferredSize(new Dimension(8, Integer.MAX_VALUE));
+        verticalScrollBar.setOpaque(false);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+    }
+
+    public static DefaultTableModel fetchPlannerActivities() {
+        String[] columns = {"Title", "Date", "Fund", "Status"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        String startOfYear = currentYear + "-01-01";
+        String endOfYear = currentYear + "-12-31";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                "SELECT title, activity_date, fund, status " +
+                "FROM planner_activities " +
+                "WHERE activity_date BETWEEN ? AND ? " +
+                "ORDER BY activity_date ASC")) {
+
+            stmt.setString(1, startOfYear);
+            stmt.setString(2, endOfYear);
+
+            ResultSet rs = stmt.executeQuery();
+            boolean hasResults = false;
+
+            while (rs.next()) {
+                hasResults = true;
+                String title = rs.getString("title");
+                String date = rs.getString("activity_date");
+                String fund = "₱ " + rs.getString("fund");
+                String status = rs.getString("status");
+
+                model.addRow(new Object[]{title, date, fund, status});
+            }
+
+            if (!hasResults) {
+                model.addRow(new Object[]{"", "", "No Planned Activities So Far", ""});
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return model;
+    }
+    
+    private int[] fetchGenderCounts() {
+        int[] counts = new int[3]; 
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT sex, COUNT(*) as count FROM applicant_information GROUP BY sex");
+             ResultSet rs = stmt.executeQuery()) {
+
+            int total = 0, male = 0, female = 0;
+            while (rs.next()) {
+                String sex = rs.getString("sex");
+                int count = rs.getInt("count");
+                total += count;
+                if ("Male".equalsIgnoreCase(sex)) {
+                    male = count;
+                } else if ("Female".equalsIgnoreCase(sex)) {
+                    female = count;
+                }
+            }
+            counts[0] = total;
+            counts[1] = male;
+            counts[2] = female;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return counts;
+    }
+    
+    public static DefaultTableModel fetchRecentWorks() {
+        String[] columns = {"", "", ""};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT title, activity_date " +
+                 "FROM planner_activities " +
+                 "WHERE activity_date < CURRENT_DATE AND status = 'Approved' " +
+                 "ORDER BY activity_date DESC LIMIT 10")
+        ) {
+            ResultSet rs = stmt.executeQuery();
+            int count = 1;
+            boolean hasResults = false;
+
+            while (rs.next()) {
+                hasResults = true;
+                String title = rs.getString("title");
+                String date = rs.getString("activity_date");
+                model.addRow(new Object[]{count++, title, date});
+            }
+
+            if (!hasResults) {
+                model.addRow(new Object[]{"", "No Recent Works So Far", ""});
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return model;
+    }
 }
 
-class RoundedPanel extends JPanel 	{
-	private static final long serialVersionUID = 1L;
-	private int cornerRadius = 20;
-	
-	public RoundedPanel() {
-		setOpaque(false);
-		setBackground(new Color(238, 235, 235));
-	}
-	
-	public RoundedPanel(int radius) {
-		this();
-		this.cornerRadius = radius;
-	}
-	@Override
+class RoundedPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private int cornerRadius = 20;
+    
+    public RoundedPanel() {
+        setOpaque(false);
+        setBackground(new Color(238, 235, 235));
+    }
+    
+    public RoundedPanel(int radius) {
+        this();
+        this.cornerRadius = radius;
+    }
+    
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();

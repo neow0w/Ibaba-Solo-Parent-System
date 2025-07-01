@@ -3,13 +3,24 @@ package MainPage;
 import plannerPage.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.*;
 import java.awt.event.*;
+
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.*;
+import java.util.List;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import JDBC.Database;
 
 public class plannerPage extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -19,10 +30,10 @@ public class plannerPage extends JPanel {
     private final SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
     private final Map<String, ActivityDetails> activities = new HashMap<>();
     private final Map<JButton, JPanel> underlineMap = new HashMap<>();
-    private JTable activitytable; 
+    private JTable activitytable;
     private JButton selectedButton = null;
     public static plannerPage instance;
-    private JPanel mainPanel; 
+    private JPanel mainPanel;
 
     public plannerPage() {
         instance = this;
@@ -86,8 +97,6 @@ public class plannerPage extends JPanel {
         calendarPanel.setBounds(5, 5, 800, 550);
         calendarPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         calendarBG.add(calendarPanel);
-
-        refreshCalendar();
 
         JPanel activitiesPanel = new RoundedPanel();
         activitiesPanel.setBounds(841, 20, 460, 650);
@@ -161,32 +170,63 @@ public class plannerPage extends JPanel {
 
         allPanel allPanel_ = new allPanel();
         mainPanel.add(allPanel_, "all");
-        mainPanel.add(new approvedPanel(), "approved");
-        mainPanel.add(new pendingPanel(), "pending");
-        mainPanel.add(new reschedPanel(), "resched");
+        approvedPanel approvedPanel_ = new approvedPanel();
+        mainPanel.add(approvedPanel_, "approved");
+        pendingPanel pendingPanel_ = new pendingPanel();
+        mainPanel.add(pendingPanel_, "pending");
+        reschedPanel reschedPanel_ = new reschedPanel();
+        mainPanel.add(reschedPanel_, "resched");
+
+        JPanel noDataAll = createNoDataPanel("No Planned Activities So Far");
+        mainPanel.add(noDataAll, "noDataAll");
+        JPanel noDataApproved = createNoDataPanel("No Approved Activities So Far");
+        mainPanel.add(noDataApproved, "noDataApproved");
+        JPanel noDataPending = createNoDataPanel("No Pending Activities So Far");
+        mainPanel.add(noDataPending, "noDataPending");
+        JPanel noDataResched = createNoDataPanel("No Activities To Be Rescheduled So Far");
+        mainPanel.add(noDataResched, "noDataResched");
 
         updateActivityTable(allPanel_.getTable());
 
         CardLayout cl = (CardLayout) (mainPanel.getLayout());
         cl.show(mainPanel, "all");
 
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (activitytable != null && !SwingUtilities.isDescendingFrom(e.getComponent(), activitytable)) {
-                    activitytable.clearSelection();
-                }
-            }
-        });
+        addMouseListenerToAll(this);
 
-        activitiesPanel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (activitytable != null && !SwingUtilities.isDescendingFrom(e.getComponent(), activitytable)) {
-                    activitytable.clearSelection();
-                }
+        loadActivitiesFromDB();
+        refreshCalendar();
+    }
+
+    private JPanel createNoDataPanel(String message) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        JLabel label = new JLabel(message);
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setVerticalAlignment(SwingConstants.CENTER);
+        label.setEnabled(false); 
+        panel.add(label, gbc);
+        return panel;
+    }
+
+    private void addMouseListenerToAll(Container container) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof Container) {
+                addMouseListenerToAll((Container) comp);
             }
-        });
+            comp.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (activitytable != null && !SwingUtilities.isDescendingFrom(e.getComponent(), activitytable)) {
+                        activitytable.clearSelection();
+                    }
+                }
+            });
+        }
     }
 
     private JButton activityBTN(String text, int xPosition, int width, JPanel mainPanel, String cardName) {
@@ -206,6 +246,7 @@ public class plannerPage extends JPanel {
                 CardLayout cl = (CardLayout) (mainPanel.getLayout());
                 cl.show(mainPanel, cardName);
                 updateActivityTableFromCard(cardName);
+                filterTableByStatus(cardName);
             }
         });
 
@@ -336,6 +377,74 @@ public class plannerPage extends JPanel {
         calendarPanel.repaint();
     }
 
+    private void filterTableByStatus(String statusFilter) {
+        DefaultTableModel tableModel = (DefaultTableModel) activitytable.getModel();
+        tableModel.setRowCount(0);
+
+        List<Map.Entry<String, ActivityDetails>> sortedList = new ArrayList<>(activities.entrySet());
+        sortedList.sort(Comparator.comparing(entry -> {
+            try {
+                return sdf.parse(entry.getKey());
+            } catch (Exception e) {
+                return new Date();
+            }
+        }));
+
+        Date today = new Date();
+        boolean hasData = false;
+
+        for (Map.Entry<String, ActivityDetails> entry : sortedList) {
+            String dateStr = entry.getKey();
+            ActivityDetails detail = entry.getValue();
+
+            try {
+                Date activityDate = sdf.parse(dateStr);
+
+                switch (statusFilter.toLowerCase()) {
+                    case "all":
+                        tableModel.addRow(new String[]{detail.title, dateStr + " - " + detail.status});
+                        hasData = true;
+                        break;
+                    case "approved":
+                        if ("Approved".equalsIgnoreCase(detail.status)) {
+                            tableModel.addRow(new String[]{detail.title, dateStr});
+                            hasData = true;
+                        }
+                        break;
+                    case "pending":
+                        if ("Pending".equalsIgnoreCase(detail.status) && (activityDate.equals(today) || activityDate.after(today))) {
+                            tableModel.addRow(new String[]{detail.title, dateStr});
+                            hasData = true;
+                        }
+                        break;
+                    case "resched":
+                        Calendar todayCal = Calendar.getInstance();
+                        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                        todayCal.set(Calendar.MINUTE, 0);
+                        todayCal.set(Calendar.SECOND, 0);
+                        todayCal.set(Calendar.MILLISECOND, 0);
+                        Date dateOnlyToday = todayCal.getTime();
+
+                        if ("Pending".equalsIgnoreCase(detail.status) && activityDate.before(dateOnlyToday)) {
+                            tableModel.addRow(new String[]{detail.title, dateStr});
+                            hasData = true;
+                        }
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        CardLayout cl = (CardLayout) mainPanel.getLayout();
+        if (!hasData) {
+            String noDataCard = "noData" + statusFilter.substring(0, 1).toUpperCase() + statusFilter.substring(1);
+            cl.show(mainPanel, noDataCard);
+        } else {
+            cl.show(mainPanel, statusFilter);
+        }
+    }
+
     private void showActivityPopup(MouseEvent e, String dateKey, Component parent) {
         JPopupMenu popup = new JPopupMenu();
         popup.setLayout(new BorderLayout());
@@ -422,7 +531,9 @@ public class plannerPage extends JPanel {
 
         delBtn.addActionListener(ev -> {
             activities.remove(dateKey);
+            deleteActivityFromDB(dateKey);
             popup.setVisible(false);
+            loadActivitiesFromDB();
             refreshCalendar();
         });
 
@@ -551,9 +662,12 @@ public class plannerPage extends JPanel {
             if (!title.isEmpty() || !desc.isEmpty()) {
                 ActivityDetails details = new ActivityDetails(title, fund, status, desc);
                 activities.put(dateKey, details);
+                saveActivityToDB(dateKey, details);
             } else {
                 activities.remove(dateKey);
+                deleteActivityFromDB(dateKey);
             }
+            loadActivitiesFromDB();
             refreshCalendar();
         }
     }
@@ -585,6 +699,115 @@ public class plannerPage extends JPanel {
             Date selected = (Date) dateSpinner.getValue();
             calendar.setTime(selected);
             refreshCalendar();
+        }
+    }
+
+    private void createTableIfNotExists() {
+        String sql = "CREATE TABLE IF NOT EXISTS planner_activities (" +
+                "activity_date DATE PRIMARY KEY, " +
+                "title VARCHAR(255), " +
+                "fund VARCHAR(50), " +
+                "status VARCHAR(50), " +
+                "description TEXT," +
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
+                ")";
+        try (Connection conn = Database.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to initialize database table.");
+        }
+    }
+
+    private void loadActivitiesFromDB() {
+        createTableIfNotExists();
+        activities.clear();
+
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT * FROM planner_activities WHERE YEAR(activity_date) = ?"
+             )) {
+            stmt.setInt(1, currentYear);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String dateKey = sdf.format(rs.getDate("activity_date"));
+                ActivityDetails detail = new ActivityDetails(
+                    rs.getString("title"),
+                    rs.getString("fund"),
+                    rs.getString("status"),
+                    rs.getString("description")
+                );
+                activities.put(dateKey, detail);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to load activities from database.");
+        }
+
+        filterTableByStatus("all");
+    }
+
+    private void saveActivityToDB(String dateKey, ActivityDetails details) {
+        createTableIfNotExists();
+        try (Connection conn = Database.getConnection()) {
+            java.util.Date utilDate = sdf.parse(dateKey);
+            java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+
+            String checkSql = "SELECT COUNT(*) FROM planner_activities WHERE activity_date = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+                checkStmt.setDate(1, sqlDate);
+                ResultSet rs = checkStmt.executeQuery();
+                rs.next();
+                int count = rs.getInt(1);
+
+                if (count == 0) {
+                    String insertSql = "INSERT INTO planner_activities " +
+                            "(activity_date, title, fund, status, description, updated_at) " +
+                            "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+                    try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                        insertStmt.setDate(1, sqlDate);
+                        insertStmt.setString(2, details.title);
+                        insertStmt.setString(3, details.fund);
+                        insertStmt.setString(4, details.status);
+                        insertStmt.setString(5, details.description);
+                        insertStmt.executeUpdate();
+                    }
+                } else {
+                    String updateSql = "UPDATE planner_activities SET title = ?, fund = ?, status = ?, description = ? WHERE activity_date = ?";
+                    try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                        updateStmt.setString(1, details.title);
+                        updateStmt.setString(2, details.fund);
+                        updateStmt.setString(3, details.status);
+                        updateStmt.setString(4, details.description);
+                        updateStmt.setDate(5, sqlDate);
+                        updateStmt.executeUpdate();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to save activity.");
+        }
+    }
+
+    private void deleteActivityFromDB(String dateKey) {
+        try (Connection conn = Database.getConnection()) {
+            java.util.Date utilDate = sdf.parse(dateKey);
+            java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+
+            String deleteSql = "DELETE FROM planner_activities WHERE activity_date = ?";
+            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                deleteStmt.setDate(1, sqlDate);
+                deleteStmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to delete activity.");
         }
     }
 

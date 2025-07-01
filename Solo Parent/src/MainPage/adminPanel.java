@@ -6,6 +6,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import JDBC.Database;
+
 public class adminPanel extends JPanel {
 
 	private static final long serialVersionUID = 1L;
@@ -83,24 +88,72 @@ public class adminPanel extends JPanel {
 		changePassPanel.add(setPassBTN);
 		
 		setPassBTN.addActionListener(e -> {
-			if (currentPasswordField == null || newPasswordField == null || confirmPasswordField == null) {
-		        JOptionPane.showMessageDialog(null, "Password fields are not initialized.", "Error", JOptionPane.ERROR_MESSAGE);
-		        return;
-		    }
-			
 			String currentPass = new String(currentPasswordField.getPassword()).trim();
 		    String newPass = new String(newPasswordField.getPassword()).trim();
 		    String confirmPass = new String(confirmPasswordField.getPassword()).trim();
+		    
+		    try (Connection conn = Database.getConnection()) {
+		        String query = "SELECT password FROM users WHERE id = 1";
+		        try (PreparedStatement stmt = conn.prepareStatement(query);
+		             ResultSet rs = stmt.executeQuery()) {
 
-		    if (newPass.isEmpty() || confirmPass.isEmpty() || currentPass.isEmpty()) {
-		        JOptionPane.showMessageDialog(null, "Password fields cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
-		    } else if (!currentPass.equals(currentPassword)) {
-		        JOptionPane.showMessageDialog(null, "Current password is incorrect.", "Error", JOptionPane.ERROR_MESSAGE);
-		    } else if (!newPass.equals(confirmPass)) {
-		        JOptionPane.showMessageDialog(null, "Passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
-		    } else {
-		        JOptionPane.showMessageDialog(null, "Password updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+		            if (rs.next()) {
+		                String dbPassword = rs.getString("password");
+		                
+		    		    if (newPass.isEmpty() || confirmPass.isEmpty() || currentPass.isEmpty()) {
+		    		        JOptionPane.showMessageDialog(null, "Password fields cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+		    		    if (newPass.equals(currentPass)) {
+		    		        JOptionPane.showMessageDialog(null, "New password cannot be the same as the current password.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+
+		    		    if (newPass.length() < 8) {
+		    		        JOptionPane.showMessageDialog(null, "New password must be at least 8 characters long.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+
+		    		    if (!newPass.matches(".*[A-Z].*")) {
+		    		        JOptionPane.showMessageDialog(null, "New password must contain at least one capital letter.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+
+		    		    if (!newPass.matches(".*\\d.*")) {
+		    		        JOptionPane.showMessageDialog(null, "New password must contain at least one number.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+
+		    		    if (!newPass.matches("[a-zA-Z0-9]+")) {
+		    		        JOptionPane.showMessageDialog(null, "New password must not contain special characters.", "Error", JOptionPane.ERROR_MESSAGE);
+		    		        return;
+		    		    }
+
+		                if (!dbPassword.equals(currentPass)) {
+		                    JOptionPane.showMessageDialog(null, "Current password is incorrect.", "Error", JOptionPane.ERROR_MESSAGE);
+		                    return;
+		                }
+
+		                if (!newPass.equals(confirmPass)) {
+		                    JOptionPane.showMessageDialog(null, "New password do not match the confirm password.", "Error", JOptionPane.ERROR_MESSAGE);
+		                    return;
+		                }
+
+		                String updateSql = "UPDATE users SET password = ? WHERE id = 1";
+		                try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+		                    updateStmt.setString(1, newPass);
+		                    updateStmt.executeUpdate();
+		                    JOptionPane.showMessageDialog(null, "Password updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+		                }
+		            } else {
+		                JOptionPane.showMessageDialog(null, "Admin record not found.", "Error", JOptionPane.ERROR_MESSAGE);
+		            }
+		        }
+		    } catch (Exception ex) {
+		        ex.printStackTrace();
+		        JOptionPane.showMessageDialog(null, "Database error occurred.", "Error", JOptionPane.ERROR_MESSAGE);
 		    }
+		    
 		});
 		
 		

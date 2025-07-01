@@ -176,7 +176,7 @@ public class mainPage extends JFrame {
             public void mouseClicked(MouseEvent e) {
             	 if (selectedButton != null) {
             	        selectedButton.setForeground(Color.WHITE);
-            	        selectedButton.setFont(new Font("", Font.PLAIN, 16));
+            	        selectedButton.setFont(new Font("", Font.PLAIN, 20));
             	        selectedButton = null;
             	    }
             	    CardLayout cl = (CardLayout) (mainPanel.getLayout());

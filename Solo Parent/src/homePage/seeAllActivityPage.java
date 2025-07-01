@@ -4,12 +4,19 @@ import MainPage.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import JDBC.Database;
 
 public class seeAllActivityPage extends JFrame {
 
@@ -83,38 +90,10 @@ public class seeAllActivityPage extends JFrame {
         summarytablePanel.setBackground(new Color(255,255,255));
         getContentPane().add(summarytablePanel);
         
-        String[][] data = {
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"},
-            {"Wheelchair Distribution", "June 11, 2025", "₱ 100,000", "Approved"},
-            {"Solo Parent ID Printing", "June 14, 2025", "₱ 2,500", "Approved"},
-            {"Medical Assistance Day", "June 23, 2025", "₱ 50,000", "Pending"},
-            {"New Members Orientation", "June 27, 2025", "₱ 1,000", "Approved"}
-        };
-
-        String[] columns = {"", "", "", ""};
+        String[] columns = {"Activity", "Date", "Budget", "Status"};
+        DefaultTableModel expModel = new DefaultTableModel(columns, 0);
+        loadActivitiesFromDB(expModel);
         
-        DefaultTableModel expModel = new DefaultTableModel(data,columns);
-        
-
         summaryTable = new JTable(expModel) {
         	@Override
         	public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
@@ -170,8 +149,35 @@ public class seeAllActivityPage extends JFrame {
 				dispose();
 			}
 		});
-                
+        
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (mainPage.instance != null) {
+                    mainPage.instance.hideDim();
+                }
+            }
+        });       
 	}
+	
+	private void loadActivitiesFromDB(DefaultTableModel model) {
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM planner_activities ORDER BY activity_date ASC");
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                String title = rs.getString("title");
+                String date = rs.getDate("activity_date").toString(); 
+                String fund = "₱ " + rs.getString("fund");
+                String status = rs.getString("status");
+
+                model.addRow(new String[]{title, date, fund, status});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to load activities from database.");
+        }
+    }
 	
 	private void styleScrollBar(JScrollPane scrollPane) {
 	    JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();

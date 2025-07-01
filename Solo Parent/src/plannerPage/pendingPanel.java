@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -16,19 +15,17 @@ public class pendingPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private JTable activitytable;
     private final SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+    private DefaultTableModel tableModel;
 
     public pendingPanel() {
         setLayout(null);
         setBackground(new Color(255, 255, 255));
-        setName("pending"); 
+        setName("pending");
 
-        String[][] data = {
-                {"Wheelchair Distribution", "Pending"}
-        };
-        String[] columns = {"", ""};
-        DefaultTableModel expModel = new DefaultTableModel(data, columns);
+        String[] columns = {"Activity", "Date"};
+        tableModel = new DefaultTableModel(columns, 0);
 
-        activitytable = new JTable(expModel) {
+        activitytable = new JTable(tableModel) {
             @Override
             public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                 JTextArea area = new JTextArea(getValueAt(row, column).toString());
@@ -41,11 +38,7 @@ public class pendingPanel extends JPanel {
                         BorderFactory.createEmptyBorder(10, 20, 10, 10)
                 ));
                 if (column == 1) {
-                    if (getValueAt(row, column).toString().equalsIgnoreCase("Approved")) {
-                        area.setForeground(Color.decode("#ff4fc3"));
-                    } else {
-                        area.setForeground(Color.GRAY);
-                    }
+                    area.setForeground(Color.GRAY);
                 }
                 if (!isRowSelected(row)) {
                     area.setBackground(new Color(255, 255, 255));
@@ -66,8 +59,9 @@ public class pendingPanel extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 int selectedRow = activitytable.getSelectedRow();
                 if (selectedRow != -1) {
-                    String todayKey = sdf.format(Calendar.getInstance().getTime());
-                    plannerPage.instance.showEditDialog(todayKey);
+                    String dateStr = activitytable.getValueAt(selectedRow, 1).toString();
+                    String dateKey = dateStr.contains(" - ") ? dateStr.split(" - ")[0] : dateStr;
+                    plannerPage.instance.showEditDialog(dateKey);
                 }
             }
         });
@@ -78,10 +72,10 @@ public class pendingPanel extends JPanel {
         activitytable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
         activitytable.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
 
-        activitytable.getColumnModel().getColumn(0).setPreferredWidth(250);
-        activitytable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        activitytable.getColumnModel().getColumn(0).setPreferredWidth(150);
+        activitytable.getColumnModel().getColumn(1).setPreferredWidth(100);
 
-        activitytable.setRowHeight(57);
+        activitytable.setRowHeight(70);
         activitytable.setShowGrid(false);
         activitytable.setIntercellSpacing(new Dimension(0, 0));
         activitytable.setTableHeader(null);

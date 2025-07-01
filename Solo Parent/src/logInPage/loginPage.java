@@ -1,11 +1,15 @@
 package logInPage;
 
 import MainPage.*;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+
+import JDBC.Database;
 
 
 
@@ -211,8 +215,8 @@ public class loginPage extends JFrame {
     }
 	
 	private void handleLogin() {
-        String username = Username.getText();
-        String password = new String(passwordField.getPassword());
+	    String username = Username.getText().trim();
+	    String password = new String(passwordField.getPassword()).trim();
         
         if (username.isEmpty() || username.equals("Username")) {
         	JOptionPane.showMessageDialog(this, "Please enter username.");
@@ -226,15 +230,23 @@ public class loginPage extends JFrame {
             JOptionPane.showMessageDialog(this, "Please enter both username and password.");
             return;
         }
-        if (username.equals("admin") && password.equals("1234")) {
-            mainPage main = new mainPage();
-            main.setLocationRelativeTo(null);
-            main.setVisible(true);
-
-            dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Invalid username or password.");
-        }
+        
+	    try (var conn = Database.getConnection();
+		         var stmt = conn.prepareStatement(
+		             "SELECT COUNT(*) FROM users WHERE username = ? AND password = ?")) {
+		        stmt.setString(1, username);
+		        stmt.setString(2, password); 
+		        var rs = stmt.executeQuery();
+		        if (rs.next() && rs.getInt(1) == 1) {
+		            mainPage.launch();
+		            dispose();
+		        } else {
+		            JOptionPane.showMessageDialog(this, "Invalid username or password.");
+		        }
+		    } catch (Exception ex) {
+		        ex.printStackTrace();
+		        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage());
+		    }
     }	
 	
 	private void showPassword() {

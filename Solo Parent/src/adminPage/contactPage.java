@@ -8,6 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -44,7 +46,7 @@ public class contactPage extends JFrame {
 
 	public contactPage() {
 		setUndecorated(true);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setBounds(100, 100, 670, 570);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -185,6 +187,15 @@ public class contactPage extends JFrame {
 		        }
 			}
 		});
+		
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (mainPage.instance != null) {
+                    mainPage.instance.hideDim();
+                }
+            }
+        });
 	}
 	private void styleButton(JButton button) {
         button.setBackground(new Color(200, 50, 50));
