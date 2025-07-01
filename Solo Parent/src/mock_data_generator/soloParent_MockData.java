@@ -45,11 +45,18 @@ public class soloParent_MockData {
             ) LIMIT 1
         """;
 
+        String[][] users = {
+            {"admin", "1234"},
+            {"testuser", "testpass"}
+        };
+
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
-            pstmt.setString(1, "admin");
-            pstmt.setString(2, "1234");
-            pstmt.setString(3, "admin");
-            pstmt.executeUpdate();
+            for (String[] user : users) {
+                pstmt.setString(1, user[0]);
+                pstmt.setString(2, user[1]);
+                pstmt.setString(3, user[0]);
+                pstmt.executeUpdate();
+            }
         }
     }
 
@@ -147,26 +154,22 @@ public class soloParent_MockData {
                         "Blk 2 Lot 8 Tandang Sora", "liza.moreno@example.com", "09171234500",
                         "Senior High", "Cashier", "Grocery Mart", "12000.00", "144000.00",
                         "Unmarried, Abandoned", null, null, "", "2023-03213-SP-0"},
-
                 {"Ronald Vega", "Cavite", 39, "1986-05-10", "Male", "Married",
                         "Dasmariñas City", "ronald.vega@example.com", "09229998877",
                         "College Graduate", "Technician", "ElectroFix", "25000.00", "300000.00",
                         "Married, Annulled", "2011-02-14", "2019-06-01", "", "2023-04214-SP-0"},
-
                 {"Carla Buenaventura", "Cebu City", 32, "1993-08-08", "Female", "Single",
                         "Mabolo, Cebu City", "carla.b@example.com", "09338887766",
                         "College", "Online Seller", "", "18000.00", "216000.00",
                         "Unmarried, Death of Partner", null, null, "", "2023-31134-SP-0"},
-
                 {"Mark Solis", "Iloilo", 48, "1977-04-01", "Male", "Married",
                         "Jaro, Iloilo City", "marksolis@ymail.com", "09180001122",
                         "Post Graduate", "Professor", "WVSU", "40000.00", "480000.00",
                         "Married, Widow/er", "2000-05-15", null, "", "2023-12451-SP-0"},
-
                 {"Jennylyn Arce", "Zamboanga", 34, "1991-07-17", "Female", "Single",
                         "Ayala, Zamboanga City", "jen.arce@gmail.com", "09092224455",
                         "Vocational", "Massage Therapist", "", "10000.00", "120000.00",
-                        "Others", null, null, "Partner imprisoned for more than 10 years", "2023-52342-SP-0"},
+                        "Others", null, null, "Partner imprisoned for more than 10 years", "2023-52342-SP-0"}
             };
 
             for (Object[] a : applicants) {
@@ -265,7 +268,6 @@ public class soloParent_MockData {
         }
     }
 
-
     private static void insertPlannerActivities(Connection conn) throws SQLException {
         String sql = """
             INSERT INTO planner_activities (
@@ -274,15 +276,40 @@ public class soloParent_MockData {
         """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, "2025-07-10"); pstmt.setString(2, "Barangay Clean-up Drive"); pstmt.setString(3, "Barangay Fund - ₱10,000"); pstmt.setString(4, "Pending"); pstmt.setString(5, "Organizing volunteers to clean streets and waterways."); pstmt.executeUpdate();
+            pstmt.setDate(1, java.sql.Date.valueOf("2025-07-10"));
+            pstmt.setString(2, "Barangay Clean-up Drive");
+            pstmt.setString(3, "Barangay Fund - ₱10,000");
+            pstmt.setString(4, "Pending");
+            pstmt.setString(5, "Organizing volunteers to clean streets and waterways.");
+            pstmt.executeUpdate();
 
-            pstmt.setString(1, "2025-08-01"); pstmt.setString(2, "Back-to-School Support Program"); pstmt.setString(3, "Education Fund - ₱25,000"); pstmt.setString(4, "Approved"); pstmt.setString(5, "Distribution of school supplies for indigent students."); pstmt.executeUpdate();
+            pstmt.setDate(1, java.sql.Date.valueOf("2025-08-01"));
+            pstmt.setString(2, "Back-to-School Support Program");
+            pstmt.setString(3, "Education Fund - ₱25,000");
+            pstmt.setString(4, "Approved");
+            pstmt.setString(5, "Distribution of school supplies for indigent students.");
+            pstmt.executeUpdate();
 
-            pstmt.setString(1, "2025-07-20"); pstmt.setString(2, "Free Medical Check-up"); pstmt.setString(3, "Health Fund - ₱18,500"); pstmt.setString(4, "Approved"); pstmt.setString(5, "Medical services for seniors and children."); pstmt.executeUpdate();
+            pstmt.setDate(1, java.sql.Date.valueOf("2025-07-20"));
+            pstmt.setString(2, "Free Medical Check-up");
+            pstmt.setString(3, "Health Fund - ₱18,500");
+            pstmt.setString(4, "Approved");
+            pstmt.setString(5, "Medical services for seniors and children.");
+            pstmt.executeUpdate();
 
-            pstmt.setString(1, "2025-08-15"); pstmt.setString(2, "Livelihood Skills Workshop"); pstmt.setString(3, "Livelihood Fund - ₱12,000"); pstmt.setString(4, "Pending"); pstmt.setString(5, "Sewing and cooking workshop for solo parents."); pstmt.executeUpdate();
+            pstmt.setDate(1, java.sql.Date.valueOf("2025-08-15"));
+            pstmt.setString(2, "Livelihood Skills Workshop");
+            pstmt.setString(3, "Livelihood Fund - ₱12,000");
+            pstmt.setString(4, "Pending");
+            pstmt.setString(5, "Sewing and cooking workshop for solo parents.");
+            pstmt.executeUpdate();
 
-            pstmt.setString(1, "2025-09-05"); pstmt.setString(2, "Feeding Program for Children"); pstmt.setString(3, "Nutrition Fund - ₱15,000"); pstmt.setString(4, "Approved"); pstmt.setString(5, "One-week feeding project for malnourished children."); pstmt.executeUpdate();
+            pstmt.setDate(1, java.sql.Date.valueOf("2025-09-05"));
+            pstmt.setString(2, "Feeding Program for Children");
+            pstmt.setString(3, "Nutrition Fund - ₱15,000");
+            pstmt.setString(4, "Approved");
+            pstmt.setString(5, "One-week feeding project for malnourished children.");
+            pstmt.executeUpdate();
         }
     }
 }
