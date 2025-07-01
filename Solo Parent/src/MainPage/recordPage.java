@@ -293,7 +293,6 @@ public class recordPage extends JPanel {
                         String sex = rs.getString("sex");
                         String status = rs.getString("civil_status");
 
-                        // Handle potential null values
                         if (name == null) name = "N/A";
                         if (id == null) id = "N/A";
                         if (birthdate == null) birthdate = "N/A";

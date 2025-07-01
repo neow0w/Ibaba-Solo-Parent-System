@@ -26,14 +26,14 @@ public class informationPage extends JFrame {
     private JTable familytable;
     private DefaultTableModel tableModel;
     private JLabel ageValue, bdayValue, educationalValue, addressValue, numberValue, emailAddValue, occupationValue, companyValue;
-    private JLabel monthlyValue, annualValue, placeValue, statusValue, sexValue, name, soloParentID;
+    private JLabel monthlyValue, annualValue, placeValue, classificationValue, sexValue, name, soloParentID;
     private JButton editButton;
     private JPanel dimPanel; 
 
     public static void launch() {
         EventQueue.invokeLater(() -> {
             try {
-            	informationPage frame = new informationPage("2023-31134-SP-0");
+                informationPage frame = new informationPage("2023-31134-SP-0");
                 frame.setResizable(false);
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
@@ -89,7 +89,7 @@ public class informationPage extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-            	boolean newMemberOpen = false;
+                boolean newMemberOpen = false;
                 for (Frame frame : Frame.getFrames()) {
                     if (frame instanceof newMember && frame.isVisible()) {
                         newMemberOpen = true;
@@ -129,10 +129,10 @@ public class informationPage extends JFrame {
         soloParentID.setBounds(175, 65, 300, 20);
         mainPanel.add(soloParentID);
 
-        statusValue = new JLabel("");
-        statusValue.setFont(new Font("Tahoma", Font.PLAIN, 20));
-        statusValue.setBounds(175, 95, 400, 20);
-        mainPanel.add(statusValue);
+        classificationValue = new JLabel("");
+        classificationValue.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        classificationValue.setBounds(175, 95, 400, 20);
+        mainPanel.add(classificationValue);
 
         JPanel hrLine1 = new JPanel();
         hrLine1.setBounds(25, 150, 1250, 2);
@@ -177,10 +177,6 @@ public class informationPage extends JFrame {
         civilStatus.setFont(new Font("Tahoma", Font.PLAIN, 14));
         civilStatus.setBounds(240, 195, 90, 20);
         mainPanel.add(civilStatus);
-
-        statusValue.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        statusValue.setBounds(240, 220, 110, 25);
-        mainPanel.add(statusValue);
 
         JLabel sex = new JLabel("Sex");
         sex.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -421,10 +417,9 @@ public class informationPage extends JFrame {
                 if (classification != null) {
                     classification = classification.replaceAll("\\s*\\(.*?\\)", "").trim();
                 }
-                statusValue.setText(classification != null && !classification.isEmpty() ? classification : "");
+                classificationValue.setText(classification != null && !classification.isEmpty() ? classification : "Not specified");
                 ageValue.setText(rs.getInt("age") + " Years old");
                 bdayValue.setText(rs.getString("birthdate"));
-                statusValue.setText(rs.getString("civil_status"));
                 sexValue.setText(rs.getString("sex"));
                 educationalValue.setText(rs.getString("highest_educ_attainment"));
                 placeValue.setText(rs.getString("birthplace"));

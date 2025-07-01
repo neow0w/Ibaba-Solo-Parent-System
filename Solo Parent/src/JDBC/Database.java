@@ -54,7 +54,6 @@ public class Database {
     public static Connection getConnection() throws SQLException {
         try {
             Connection conn = DriverManager.getConnection(URL_WITH_DB, USERNAME, PASSWORD);
-            System.out.println("Connected to MySQL database.");
             return conn;
         } catch (SQLException e) {
             System.err.println("Failed to connect to MySQL: " + e.getMessage());
