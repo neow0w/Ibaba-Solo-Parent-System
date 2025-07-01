@@ -11,15 +11,14 @@ public class DBTableInitializer {
 
     public static void initializeTables() {
         try (Connection conn = Database.getConnection()) {
-            createApplicantTable(conn); // Create first due to foreign key dependency
+            createApplicantTable(conn); 
             createFamCompositionTable(conn);
             createPlannerTable(conn);
-            createUsersTable(conn); // Create last to ensure compatibility
+            createUsersTable(conn); 
             insertMockApplicantData(conn);
             insertFamilyComposition(conn);
             insertPlannerActivities(conn);
             insertMockUsersData(conn);
-            JOptionPane.showMessageDialog(null, "✅ All tables created and mock data inserted successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "❌ Failed to initialize database tables:\n" + e.getMessage());

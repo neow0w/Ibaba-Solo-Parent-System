@@ -139,7 +139,7 @@ public class newMember extends JFrame {
         membertable.getColumnModel().getColumn(1).setPreferredWidth(220);
         membertable.getColumnModel().getColumn(2).setPreferredWidth(150);
         membertable.getColumnModel().getColumn(3).setPreferredWidth(150);
-        membertable.getColumnModel().getColumn(4).setPreferredWidth(50);
+        membertable.getColumnModel().getColumn(4).setPreferredWidth(60);
         membertable.getColumnModel().getColumn(5).setPreferredWidth(150);
     
         membertable.setRowHeight(57);

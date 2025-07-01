@@ -653,8 +653,8 @@ public class addMemberPage extends JFrame {
             JOptionPane.showMessageDialog(this, "Please enter your birthdate.");
             return false;
         }
-        if (!birthdateText.matches("^(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])/\\d{4}$")) {
-            JOptionPane.showMessageDialog(this, "Birthdate must be in MM/DD/YYYY format.");
+        if (!birthdateText.matches("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")) {
+            JOptionPane.showMessageDialog(this, "Birthdate must be in YYYY-MM-DD format.");
             return false;
         }
         if (!maleRadio.isSelected() && !femaleRadio.isSelected()) {

@@ -26,7 +26,6 @@ public class loginPage extends JFrame {
     public static void launch() {
         EventQueue.invokeLater(() -> {
             try {
-                // Initialize database tables if they don't exist
                 try (Connection conn = Database.getConnection();
                      Statement stmt = conn.createStatement()) {
                     ResultSet rs = stmt.executeQuery("SHOW TABLES LIKE 'users'");

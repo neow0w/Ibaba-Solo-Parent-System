@@ -1,0 +1,88 @@
+# Membership and Project Management System
+
+A Java + MySQL-based membership and project management system designed to monitor member records and manage association proposed projects in one organized platform.
+
+> ⚠️ **Note:** This system is under active development.
+> There is **no executable `.jar` file** included.
+> It is **recommended to open and run the program through Eclipse IDE** for full functionality.
+
+---
+
+## 📂 Project Structure
+
+- `src/` – Java source files
+- `soloParent_MockData.sql` – MySQL schema + sample/mock data *(used both for structure and sample data)*
+
+---
+
+## 🛠️ Features
+
+- Complete member registration with demographic, family, employment, and solo parent classification information
+- Records management for updating existing member information
+- Project planner for scheduling, organizing, and summarizing association activities
+- Proposed activities status tracking (`Approved`, `Pending`, `Rescheduled`, `All`)
+- Centralized member information database for secure and organized records keeping
+- Auto-initialization of the database (eliminates manual SQL setup)
+- Default administrator account created during initial system setup
+
+---
+
+## 🗃️ Database Schema
+
+The system auto-generates the database and tables via `DBTableinitializer.java`.
+If you prefer manual setup or mock data, use the `soloParent_MockData.sql` script.
+
+### Tables:
+- 'applicant_information' – Stores solo parent member details
+- 'fam_composition' – Records household members
+- 'planner_activities' – Contains scheduled activities and statuses
+
+---
+
+## 💾 Default Database Credentials
+
+The system uses the following default MySQL credentials:
+
+*Username*: - 'root'
+*Password*: - 'admin123'
+
+> 🔧 **Custom MySQL Setup?**
+> If your local MySQL username/password differs, open config.properties and update:
+db.user=<your_mysql_username>
+db.password=<your_mysql_password>
+---
+
+## ⚙️ Java Setup Instructions
+
+### 1. Prerequisites
+- Java 8 or higher (Java 24 recommended)
+- Eclipse IDE (recommended for editing and running the system)
+- MySQL Server (MySQL Workbench is optional)
+
+### 2. Running the Program
+- Open the Solo Parent folder
+- Open config.properties file
+- Update the username and password:
+   db.user=<your_mysql_username>
+   db.password=<your_mysql_password>
+- After updating the username and password, save the file
+- run the Solo Parent Association - RAISE file
+
+---
+
+## 🧪 Importing Mock Data (Optional)
+
+⚠️ This step is optional if you're using the auto-initializer.
+It is helpful for previewing existing sample data during development.
+
+1. Open MySQL Workbench
+2. Go to Server > Data Import
+3. Choose Import from Self-Contained File
+   - Select soloParent_MockData.sql
+4. Target Schema: solo_parent_system
+5. Click Start Import
+
+---
+
+## 📬 Feedback
+Pull requests, bug reports, and feature suggestions are welcome!

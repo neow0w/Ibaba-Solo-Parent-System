@@ -85,7 +85,7 @@ public class mainPage extends JFrame {
         spLogo.setBounds(10, 5, 250, 85);
         topbar.add(spLogo);
 
-        JButton btnHome = topBarBTN("Home", 760, 88, mainPanel, "home");
+        JButton btnHome = topBarBTN("Home", 760, 95, mainPanel, "home");
         JButton btnRecords = topBarBTN("Records", 905, 115, mainPanel, "records");
         JButton btnPlanner = topBarBTN("Planner", 1070, 109, mainPanel, "planner");
 
