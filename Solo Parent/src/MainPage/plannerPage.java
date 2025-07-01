@@ -726,27 +726,49 @@ public class plannerPage extends JPanel {
         activities.clear();
 
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int retryCount = 3;
 
-        try (Connection conn = Database.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
-                 "SELECT * FROM planner_activities WHERE YEAR(activity_date) = ?"
-             )) {
-            stmt.setInt(1, currentYear);
+        while (retryCount > 0) {
+            try (Connection conn = Database.getConnection()) {
+                if (conn == null) {
+                    System.err.println("Database connection is null. Retrying...");
+                    retryCount--;
+                    Thread.sleep(1000); 
+                    continue;
+                }
 
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                String dateKey = sdf.format(rs.getDate("activity_date"));
-                ActivityDetails detail = new ActivityDetails(
-                    rs.getString("title"),
-                    rs.getString("fund"),
-                    rs.getString("status"),
-                    rs.getString("description")
-                );
-                activities.put(dateKey, detail);
+                String query = "SELECT * FROM planner_activities WHERE YEAR(activity_date) = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setInt(1, currentYear);
+                    ResultSet rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        String dateKey = sdf.format(rs.getDate("activity_date"));
+                        ActivityDetails detail = new ActivityDetails(
+                            rs.getString("title"),
+                            rs.getString("fund"),
+                            rs.getString("status"),
+                            rs.getString("description")
+                        );
+                        activities.put(dateKey, detail);
+                    }
+                    break; 
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage() + ". Retries left: " + retryCount);
+                retryCount--;
+                if (retryCount > 0) {
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { ie.printStackTrace(); }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Operation interrupted: " + e.getMessage());
+                break;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to load activities from database.");
+        }
+
+        if (retryCount == 0) {
+            JOptionPane.showMessageDialog(this, "Failed to connect to the database after multiple attempts. Check server status.");
         }
 
         filterTableByStatus("all");

@@ -7,6 +7,8 @@ import java.awt.event.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import JDBC.Database;
 
 import javax.swing.*;
@@ -263,52 +265,87 @@ public class recordPage extends JPanel {
     }
 
     public void loadApplicantData() {
-        try (Connection conn = Database.getConnection()) {
-            String query = "SELECT applicant_id, name, birthdate, sex, civil_status FROM applicant_information ORDER BY name ASC";
-            try (PreparedStatement stmt = conn.prepareStatement(query);
-                 ResultSet rs = stmt.executeQuery()) {
-
-                DefaultTableModel model = (DefaultTableModel) membertable.getModel();
-                model.setRowCount(0); 
-
-                int count = 1; 
-                boolean hasData = false;
-
-                while (rs.next()) {
-                    hasData = true;
-                    String name = rs.getString("name");
-                    String id = rs.getString("applicant_id"); 
-                    String birthdate = rs.getString("birthdate");
-                    String sex = rs.getString("sex");
-                    String status = rs.getString("civil_status");
-
-                    model.addRow(new Object[]{count++, name, id, birthdate, sex, status});
+        int retryCount = 3;
+        while (retryCount > 0) {
+            try (Connection conn = Database.getConnection()) {
+                if (conn == null) {
+                    System.err.println("Database connection is null. Retrying...");
+                    retryCount--;
+                    Thread.sleep(1000); 
+                    continue;
                 }
 
-                tablePanel.removeAll();
+                String query = "SELECT applicant_id, name, birthdate, sex, civil_status FROM applicant_information ORDER BY name ASC";
+                try (PreparedStatement stmt = conn.prepareStatement(query);
+                     ResultSet rs = stmt.executeQuery()) {
 
-                if (hasData) {
-                    tablePanel.add(membertable);
-                    JScrollPane scrollPane = new JScrollPane(membertable);
-                    scrollPane.setBounds(0, 0, 1290, 558);
-                    scrollPane.setBorder(BorderFactory.createEmptyBorder());
-                    styleScrollBar(scrollPane);
-                    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-                    tablePanel.add(scrollPane);
-                } else {
-                    noRecordsLabel = new JLabel("No Records Found");
-                    noRecordsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-                    noRecordsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                    noRecordsLabel.setVerticalAlignment(SwingConstants.CENTER);
-                    noRecordsLabel.setBounds(0, 0, 1290, 558);
-                    tablePanel.add(noRecordsLabel);
+                    DefaultTableModel model = (DefaultTableModel) membertable.getModel();
+                    model.setRowCount(0);
+
+                    int count = 1;
+                    boolean hasData = false;
+
+                    while (rs.next()) {
+                        hasData = true;
+                        String name = rs.getString("name");
+                        String id = rs.getString("applicant_id");
+                        String birthdate = rs.getString("birthdate");
+                        String sex = rs.getString("sex");
+                        String status = rs.getString("civil_status");
+
+                        // Handle potential null values
+                        if (name == null) name = "N/A";
+                        if (id == null) id = "N/A";
+                        if (birthdate == null) birthdate = "N/A";
+                        if (sex == null) sex = "N/A";
+                        if (status == null) status = "N/A";
+
+                        model.addRow(new Object[]{count++, name, id, birthdate, sex, status});
+                    }
+
+                    tablePanel.removeAll();
+
+                    if (hasData) {
+                        tablePanel.add(membertable);
+                        JScrollPane scrollPane = new JScrollPane(membertable);
+                        scrollPane.setBounds(0, 0, 1290, 558);
+                        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+                        styleScrollBar(scrollPane);
+                        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+                        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                        tablePanel.add(scrollPane);
+                    } else {
+                        noRecordsLabel = new JLabel("No Records Found");
+                        noRecordsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                        noRecordsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                        noRecordsLabel.setVerticalAlignment(SwingConstants.CENTER);
+                        noRecordsLabel.setBounds(0, 0, 1290, 558);
+                        tablePanel.add(noRecordsLabel);
+                    }
+                    break;
                 }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database error: " + e.getMessage() + ". Retries left: " + retryCount);
+                retryCount--;
+                if (retryCount > 0) {
+                    try { Thread.sleep(1000); } catch (InterruptedException ie) { ie.printStackTrace(); }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Operation interrupted: " + e.getMessage());
+                break;
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Unexpected error: " + e.getMessage());
+                break;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error loading data: " + e.getMessage());
         }
+
+        if (retryCount == 0) {
+            JOptionPane.showMessageDialog(this, "Failed to connect to the database after multiple attempts. Check server status.");
+        }
+
         tablePanel.revalidate();
         tablePanel.repaint();
         revalidate();
