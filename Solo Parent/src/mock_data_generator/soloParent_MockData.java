@@ -120,7 +120,8 @@ public class soloParent_MockData {
     private static void createPlannerTable(Connection conn) throws SQLException {
         String sql = """
             CREATE TABLE IF NOT EXISTS planner_activities (
-                activity_date DATE PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                activity_date DATE,
                 title VARCHAR(255),
                 fund VARCHAR(50),
                 status VARCHAR(50),
@@ -273,6 +274,11 @@ public class soloParent_MockData {
             INSERT INTO planner_activities (
                 activity_date, title, fund, status, description
             ) VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                title = VALUES(title),
+                fund = VALUES(fund),
+                status = VALUES(status),
+                description = VALUES(description)
         """;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {

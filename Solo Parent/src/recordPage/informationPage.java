@@ -312,11 +312,6 @@ public class informationPage extends JFrame {
         houseLogo.setBounds(35, 435, 30, 30);
         mainPanel.add(houseLogo);
 
-        JPanel line = new JPanel();
-        line.setBackground(new Color(0, 0, 0));
-        line.setBounds(40, 535, 2, 216);
-        mainPanel.add(line);
-
         editButton = new RoundedButton("Edit");
         editButton.setBackground(new Color(164, 164, 164));
         editButton.setBounds(1150, 30, 100, 30);
