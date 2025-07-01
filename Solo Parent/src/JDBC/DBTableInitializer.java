@@ -6,6 +6,10 @@ import javax.swing.JOptionPane;
 public class DBTableInitializer {
 
     public static void main(String[] args) {
+        initializeTables();
+    }
+
+    public static void initializeTables() {
         try (Connection conn = Database.getConnection()) {
             createApplicantTable(conn); // Create first due to foreign key dependency
             createFamCompositionTable(conn);
@@ -48,8 +52,8 @@ public class DBTableInitializer {
         """;
 
         String[][] users = {
-            {"admin", "1234"}, // From your original code
-            {"testuser", "testpass"} // For loginPage compatibility
+            {"admin", "1234"},
+            {"testuser", "testpass"}
         };
 
         try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
