@@ -32,7 +32,7 @@ public class addMemberPage extends JFrame {
     private Runnable onDataSaved;
     private informationPage parentInfoPage;
     private homePage home;
-    private String editingApplicantId = null; 
+    private String editingApplicantId = null;
 
     private int panelIndex = 0;
     private final String[] panelNames = {"applicant", "Family", "Classification"};
@@ -99,7 +99,7 @@ public class addMemberPage extends JFrame {
         applicantPanel.setBackground(new Color(238, 235, 235));
         applicantPanel.setLayout(null);
         mainPanel.add(applicantPanel, "applicant");
-        
+
         JLabel personalDetails = new JLabel("Personal Details");
         personalDetails.setFont(new Font("Tahoma", Font.BOLD, 16));
         personalDetails.setBounds(29, 130, 145, 17);
@@ -440,6 +440,18 @@ public class addMemberPage extends JFrame {
         next_saveBTN.addActionListener(e -> {
             if (panelIndex == 0) {
                 if (!validateApplicantPanel()) return;
+            } else if (panelIndex == panelNames.length - 1) {
+                try {
+	                    java.lang.reflect.Method validateMethod = classificationPanel.getClass()
+                            .getDeclaredMethod("validateClassificationPanel");
+                    validateMethod.setAccessible(true);
+                    boolean isValid = (boolean) validateMethod.invoke(classificationPanel);
+                    if (!isValid) return;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error validating classification panel.");
+                    return;
+                }
             }
             if (panelIndex < panelNames.length - 1) {
                 panelIndex++;
@@ -475,7 +487,7 @@ public class addMemberPage extends JFrame {
                 "name VARCHAR(255) NOT NULL, " +
                 "birthplace VARCHAR(255) NOT NULL, " +
                 "age INT, " +
-                "birthdate VARCHAR(10), " + 
+                "birthdate VARCHAR(10), " +
                 "sex ENUM('Male', 'Female', 'Unspecified') NOT NULL, " +
                 "civil_status ENUM('Single', 'Married') NOT NULL, " +
                 "address VARCHAR(255), " +
@@ -486,6 +498,10 @@ public class addMemberPage extends JFrame {
                 "company_name VARCHAR(255), " +
                 "monthly_income DECIMAL(15, 2), " +
                 "annual_income DECIMAL(15, 2), " +
+                "classification VARCHAR(255), " +
+                "date_of_wedding VARCHAR(50), " +
+                "date_of_separation VARCHAR(50), " +
+                "others VARCHAR(255), " +
                 "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" +
                 ")";
@@ -505,7 +521,7 @@ public class addMemberPage extends JFrame {
         try (Connection conn = Database.getConnection()) {
             String query = "SELECT * FROM applicant_information WHERE applicant_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, applicantId); 
+                stmt.setString(1, applicantId);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     nameBar.setText(rs.getString("name"));
@@ -518,8 +534,8 @@ public class addMemberPage extends JFrame {
                     highestEducationalBar.setText(rs.getString("highest_educ_attainment"));
                     occupationBar.setText(rs.getString("occupation"));
                     companyNameBar.setText(rs.getString("company_name"));
-                    monthlyIncomeBar.setText(String.valueOf(rs.getDouble("monthly_income"))); 
-                    annualIncomeBar.setText(String.valueOf(rs.getDouble("annual_income"))); 
+                    monthlyIncomeBar.setText(String.valueOf(rs.getDouble("monthly_income")));
+                    annualIncomeBar.setText(String.valueOf(rs.getDouble("annual_income")));
                     soloParentID.setText(rs.getString("applicant_id"));
 
                     String sex = rs.getString("sex");
@@ -540,8 +556,20 @@ public class addMemberPage extends JFrame {
     private void saveApplicantInformation() {
         String civilStatus = (String) civilstatusDropdown.getSelectedItem();
 
+        try {
+            java.lang.reflect.Method validateMethod = classificationPanel.getClass()
+                    .getDeclaredMethod("validateClassificationPanel");
+            validateMethod.setAccessible(true);
+            boolean isValid = (boolean) validateMethod.invoke(classificationPanel);
+            if (!isValid) return;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error validating classification panel.");
+            return;
+        }
+
         try (Connection conn = Database.getConnection()) {
-            createTableIfNotExists(); 
+            createTableIfNotExists();
             String sql;
             boolean isEditMode = editingApplicantId != null;
 
@@ -591,12 +619,12 @@ public class addMemberPage extends JFrame {
                 }
 
                 if (isEditMode) {
-                    stmt.setString(16, editingApplicantId); 
+                    stmt.setString(16, editingApplicantId);
                 }
 
                 int result = stmt.executeUpdate();
                 if (result > 0) {
-                    String applicantId = soloParentID.getText(); 
+                    String applicantId = soloParentID.getText();
 
                     String updateTimestampQuery = "UPDATE applicant_information SET updated_at = CURRENT_TIMESTAMP WHERE applicant_id = ?";
                     try (PreparedStatement updateStmt = conn.prepareStatement(updateTimestampQuery)) {
