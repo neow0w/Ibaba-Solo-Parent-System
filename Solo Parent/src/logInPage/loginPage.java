@@ -9,6 +9,7 @@ import java.awt.event.FocusEvent;
 import java.sql.*;
 
 import JDBC.Database;
+import JDBC.DBTableInitializer;
 
 public class loginPage extends JFrame {
 
@@ -25,6 +26,19 @@ public class loginPage extends JFrame {
     public static void launch() {
         EventQueue.invokeLater(() -> {
             try {
+                // Initialize database tables if they don't exist
+                try (Connection conn = Database.getConnection();
+                     Statement stmt = conn.createStatement()) {
+                    ResultSet rs = stmt.executeQuery("SHOW TABLES LIKE 'users'");
+                    if (!rs.next()) {
+                        DBTableInitializer.initializeTables();
+                    }
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(null, "Database setup error: " + e.getMessage());
+                    e.printStackTrace();
+                    return;
+                }
+
                 loginPage frame = new loginPage();
                 frame.setTitle("Barangay Ibaba Solo Parent");
                 frame.setResizable(false);
