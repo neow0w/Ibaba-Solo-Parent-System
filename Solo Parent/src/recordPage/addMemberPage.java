@@ -392,7 +392,7 @@ public class addMemberPage extends JFrame {
         Age.setBounds(260, 195, 75, 17);
         applicantPanel.add(Age);
 
-        JLabel birthdate = new JLabel("Birthdate (MM/DD/YYYY):");
+        JLabel birthdate = new JLabel("Birthdate (YYYY/MM/DD):");
         birthdate.setFont(new Font("Tahoma", Font.PLAIN, 16));
         birthdate.setBounds(665, 195, 220, 17);
         applicantPanel.add(birthdate);
