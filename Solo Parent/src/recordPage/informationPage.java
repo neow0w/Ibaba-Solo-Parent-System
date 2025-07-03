@@ -26,9 +26,9 @@ public class informationPage extends JFrame {
     private JTable familytable;
     private DefaultTableModel tableModel;
     private JLabel ageValue, bdayValue, educationalValue, addressValue, numberValue, emailAddValue, occupationValue, companyValue;
-    private JLabel monthlyValue, annualValue, placeValue, classificationValue, sexValue, name, soloParentID;
+    private JLabel monthlyValue, annualValue, placeValue, classificationValue, sexValue, name, soloParentID, civilStatusValue; 
     private JButton editButton;
-    private JPanel dimPanel; 
+    private JPanel dimPanel;
 
     public static void launch() {
         EventQueue.invokeLater(() -> {
@@ -85,7 +85,7 @@ public class informationPage extends JFrame {
                 mainPage.instance.hideDim();
             }
         });
-        
+
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -177,6 +177,11 @@ public class informationPage extends JFrame {
         civilStatus.setFont(new Font("Tahoma", Font.PLAIN, 14));
         civilStatus.setBounds(240, 195, 90, 20);
         mainPanel.add(civilStatus);
+
+        civilStatusValue = new JLabel(""); 
+        civilStatusValue.setFont(new Font("Tahoma", Font.PLAIN, 18));
+        civilStatusValue.setBounds(240, 220, 110, 25);
+        mainPanel.add(civilStatusValue);
 
         JLabel sex = new JLabel("Sex");
         sex.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -412,7 +417,7 @@ public class informationPage extends JFrame {
 
             if (rs.next()) {
                 name.setText(rs.getString("name"));
-                soloParentID.setText(rs.getString("applicant_id")); 
+                soloParentID.setText(rs.getString("applicant_id"));
                 String classification = rs.getString("classification");
                 if (classification != null) {
                     classification = classification.replaceAll("\\s*\\(.*?\\)", "").trim();
@@ -420,6 +425,7 @@ public class informationPage extends JFrame {
                 classificationValue.setText(classification != null && !classification.isEmpty() ? classification : "Not specified");
                 ageValue.setText(rs.getInt("age") + " Years old");
                 bdayValue.setText(rs.getString("birthdate"));
+                civilStatusValue.setText(rs.getString("civil_status"));  
                 sexValue.setText(rs.getString("sex"));
                 educationalValue.setText(rs.getString("highest_educ_attainment"));
                 placeValue.setText(rs.getString("birthplace"));
