@@ -15,6 +15,7 @@ public class classificationPanel extends JPanel {
     private Icon checkBox;
     private JCheckBox unmarriedAbandoned, UnmarriedSeparated, deathofPartner, marriedAbandoned, annulled, deFacto;
     private JCheckBox LegallySeparated, divorced, widow, others;
+    private String civilStatus;
 
     public classificationPanel() {
         setBackground(new Color(238, 235, 235));
@@ -220,6 +221,8 @@ public class classificationPanel extends JPanel {
             annulled, deFacto, LegallySeparated, divorced, widow, others
         };
 
+        updateCheckboxAvailability();
+
         for (JCheckBox checkBox : allCheckboxes) {
             checkBox.addActionListener(e -> {
                 for (JCheckBox cb : allCheckboxes) {
@@ -247,40 +250,76 @@ public class classificationPanel extends JPanel {
         othersBar.setEnabled(false);
     }
 
+    public void setCivilStatus(String status) {
+        this.civilStatus = status;
+        updateCheckboxAvailability();
+    }
+
+    private void updateCheckboxAvailability() {
+        unmarriedAbandoned.setEnabled("Single".equals(civilStatus) || civilStatus == null);
+        UnmarriedSeparated.setEnabled("Single".equals(civilStatus) || civilStatus == null);
+        deathofPartner.setEnabled("Single".equals(civilStatus) || civilStatus == null);
+        marriedAbandoned.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        annulled.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        deFacto.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        LegallySeparated.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        divorced.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        widow.setEnabled("Married".equals(civilStatus) || civilStatus == null);
+        others.setEnabled(true); 
+    }
+
     public void setMarriedWidow(boolean selected) {
-        widow.setSelected(selected);
+        if ("Married".equals(civilStatus)) {
+            widow.setSelected(selected);
+        }
     }
 
     public void setUnmarriedAbandoned(boolean selected) {
-        unmarriedAbandoned.setSelected(selected);
+        if ("Single".equals(civilStatus)) {
+            unmarriedAbandoned.setSelected(selected);
+        }
     }
 
     public void setUnmarriedSeparated(boolean selected) {
-        UnmarriedSeparated.setSelected(selected);
+        if ("Single".equals(civilStatus)) {
+            UnmarriedSeparated.setSelected(selected);
+        }
     }
 
     public void setdeathofPartner(boolean selected) {
-        deathofPartner.setSelected(selected);
+        if ("Single".equals(civilStatus)) {
+            deathofPartner.setSelected(selected);
+        }
     }
 
     public void setMarriedAbandoned(boolean selected) {
-        marriedAbandoned.setSelected(selected);
+        if ("Married".equals(civilStatus)) {
+            marriedAbandoned.setSelected(selected);
+        }
     }
 
     public void setannulled(boolean selected) {
-        annulled.setSelected(true);
+        if ("Married".equals(civilStatus)) {
+            annulled.setSelected(selected);
+        }
     }
 
     public void setdeFacto(boolean selected) {
-        deFacto.setSelected(selected);
+        if ("Married".equals(civilStatus)) {
+            deFacto.setSelected(selected);
+        }
     }
 
     public void setLegallySeparated(boolean selected) {
-        LegallySeparated.setSelected(selected);
+        if ("Married".equals(civilStatus)) {
+            LegallySeparated.setSelected(selected);
+        }
     }
 
     public void setdivorced(boolean selected) {
-        divorced.setSelected(selected);
+        if ("Married".equals(civilStatus)) {
+            divorced.setSelected(selected);
+        }
     }
 
     public void setothers(boolean selected) {
@@ -341,6 +380,37 @@ public class classificationPanel extends JPanel {
     }
 
     public boolean validateClassificationPanel() {
+        JCheckBox[] allCheckboxes = {
+            unmarriedAbandoned, UnmarriedSeparated, deathofPartner, marriedAbandoned,
+            annulled, deFacto, LegallySeparated, divorced, widow, others
+        };
+
+        boolean isAnySelected = false;
+        for (JCheckBox checkBox : allCheckboxes) {
+            if (checkBox.isSelected()) {
+                isAnySelected = true;
+                break;
+            }
+        }
+
+        if (!isAnySelected) {
+            JOptionPane.showMessageDialog(this, "Please select at least one classification.");
+            return false;
+        }
+
+        if ("Single".equals(civilStatus)) {
+            if (marriedAbandoned.isSelected() || annulled.isSelected() || deFacto.isSelected() ||
+                LegallySeparated.isSelected() || divorced.isSelected() || widow.isSelected()) {
+                JOptionPane.showMessageDialog(this, "Invalid selection: Single applicants can only select Unmarried or Others options.");
+                return false;
+            }
+        } else if ("Married".equals(civilStatus)) {
+            if (unmarriedAbandoned.isSelected() || UnmarriedSeparated.isSelected() || deathofPartner.isSelected()) {
+                JOptionPane.showMessageDialog(this, "Invalid selection: Married applicants can only select Married or Others options.");
+                return false;
+            }
+        }
+
         if (marriedAbandoned.isSelected()) {
             String weddingDateText = dateofWeddingBar.getText().trim();
             if (weddingDateText.isEmpty()) {
@@ -367,24 +437,6 @@ public class classificationPanel extends JPanel {
 
         if (others.isSelected() && othersBar.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please specify the reason in Others field.");
-            return false;
-        }
-
-        JCheckBox[] allCheckboxes = {
-            unmarriedAbandoned, UnmarriedSeparated, deathofPartner, marriedAbandoned,
-            annulled, deFacto, LegallySeparated, divorced, widow, others
-        };
-
-        boolean isAnySelected = false;
-        for (JCheckBox checkBox : allCheckboxes) {
-            if (checkBox.isSelected()) {
-                isAnySelected = true;
-                break;
-            }
-        }
-
-        if (!isAnySelected) {
-            JOptionPane.showMessageDialog(this, "Please select at least one classification.");
             return false;
         }
 
@@ -460,7 +512,7 @@ public class classificationPanel extends JPanel {
 
             int rows = stmt.executeUpdate();
             if (rows == 0) {
-            	JOptionPane.showMessageDialog(this, "No record updated. Check applicant_id.");
+                JOptionPane.showMessageDialog(this, "No record updated. Check applicant_id.");
             } 
 
         } catch (SQLException e) {
@@ -470,7 +522,7 @@ public class classificationPanel extends JPanel {
     }
 
     public void loadClassificationInformation(String applicantId) {
-        String sql = "SELECT classification, date_of_wedding, date_of_separation, others FROM applicant_information WHERE applicant_id = ?";
+        String sql = "SELECT classification, date_of_wedding, date_of_separation, others, civil_status FROM applicant_information WHERE applicant_id = ?";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -483,6 +535,7 @@ public class classificationPanel extends JPanel {
                 String weddingDate = rs.getString("date_of_wedding");
                 String separationDate = rs.getString("date_of_separation");
                 String othersText = rs.getString("others");
+                this.civilStatus = rs.getString("civil_status");
 
                 unmarriedAbandoned.setSelected(false);
                 UnmarriedSeparated.setSelected(false);
@@ -495,25 +548,37 @@ public class classificationPanel extends JPanel {
                 widow.setSelected(false);
                 others.setSelected(false);
 
+                updateCheckboxAvailability();
+
                 if (classification != null) {
                     String cleanedClassification = classification.replaceAll("\\s*\\(.*?\\)", "").trim();
-                    if (cleanedClassification.equals("Unmarried, Abandoned")) unmarriedAbandoned.setSelected(true);
-                    else if (cleanedClassification.equals("Unmarried, Separated")) UnmarriedSeparated.setSelected(true);
-                    else if (cleanedClassification.equals("Unmarried, Death of Partner")) deathofPartner.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Abandoned")) marriedAbandoned.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Annulled")) annulled.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Separation de Facto")) deFacto.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Legally Separated")) LegallySeparated.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Divorced")) divorced.setSelected(true);
-                    else if (cleanedClassification.equals("Married, Widow/er")) widow.setSelected(true);
-                    else if (cleanedClassification.equals("Others")) others.setSelected(true);
+                    if (cleanedClassification.equals("Unmarried, Abandoned") && "Single".equals(civilStatus)) {
+                        unmarriedAbandoned.setSelected(true);
+                    } else if (cleanedClassification.equals("Unmarried, Separated") && "Single".equals(civilStatus)) {
+                        UnmarriedSeparated.setSelected(true);
+                    } else if (cleanedClassification.equals("Unmarried, Death of Partner") && "Single".equals(civilStatus)) {
+                        deathofPartner.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Abandoned") && "Married".equals(civilStatus)) {
+                        marriedAbandoned.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Annulled") && "Married".equals(civilStatus)) {
+                        annulled.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Separation de Facto") && "Married".equals(civilStatus)) {
+                        deFacto.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Legally Separated") && "Married".equals(civilStatus)) {
+                        LegallySeparated.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Divorced") && "Married".equals(civilStatus)) {
+                        divorced.setSelected(true);
+                    } else if (cleanedClassification.equals("Married, Widow/er") && "Married".equals(civilStatus)) {
+                        widow.setSelected(true);
+                    } else if (cleanedClassification.equals("Others")) {
+                        others.setSelected(true);
+                    }
                 }
 
                 dateofWeddingBar.setText(weddingDate != null ? weddingDate : "");
                 dateofSeparationBar.setText(separationDate != null ? separationDate : "");
                 othersBar.setText(othersText != null ? othersText : "");
 
-                // Enable/disable fields based on selected classification
                 dateofWeddingBar.setEnabled(marriedAbandoned.isSelected());
                 dateofSeparationBar.setEnabled(annulled.isSelected());
                 othersBar.setEnabled(others.isSelected());

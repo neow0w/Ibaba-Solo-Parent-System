@@ -1,4 +1,4 @@
-package mock_data_generator;
+	package mock_data_generator;
 
 import java.sql.*;
 import javax.swing.JOptionPane;

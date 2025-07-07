@@ -90,6 +90,7 @@ public class loginPage extends JFrame {
         Username.setText("Username");
         Username.setBounds(60, 165, 154, 26);
         Username.setCaretColor(new Color(255, 255, 255));
+        Username.setCaretColor(Color.WHITE);
         Username.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color.GRAY, 1),
             BorderFactory.createEmptyBorder(0, 7, 0, 0)
@@ -104,6 +105,7 @@ public class loginPage extends JFrame {
         passwordField.setForeground(Color.GRAY);
         passwordField.setText("Password");
         passwordField.setEchoChar((char) 0);
+        passwordField.setCaretColor(Color.WHITE);
         passwordField.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Color.GRAY, 1),
             BorderFactory.createEmptyBorder(0, 7, 0, 0)

@@ -34,6 +34,7 @@ public class plannerPage extends JPanel {
     private JButton selectedButton = null;
     public static plannerPage instance;
     private JPanel mainPanel;
+    private final JPanel allLine, approvedLine, pendingLine, reschedLine;
 
     public plannerPage() {
         instance = this;
@@ -126,22 +127,22 @@ public class plannerPage extends JPanel {
         mainPanel.setLayout(new CardLayout());
         tablePanel.add(mainPanel);
 
-        JPanel allLine = new JPanel();
+        allLine = new JPanel();
         allLine.setBackground(new Color(255, 64, 169));
         allLine.setBounds(25, 108, 38, 4);
         activitiesPanel.add(allLine);
 
-        JPanel approvedLine = new JPanel();
+        approvedLine = new JPanel();
         approvedLine.setBackground(new Color(255, 64, 169));
         approvedLine.setBounds(90, 108, 95, 4);
         activitiesPanel.add(approvedLine);
 
-        JPanel pendingLine = new JPanel();
+        pendingLine = new JPanel();
         pendingLine.setBackground(new Color(255, 64, 169));
         pendingLine.setBounds(210, 108, 85, 4);
         activitiesPanel.add(pendingLine);
 
-        JPanel reschedLine = new JPanel();
+        reschedLine = new JPanel();
         reschedLine.setBackground(new Color(255, 64, 169));
         reschedLine.setBounds(315, 108, 115, 4);
         activitiesPanel.add(reschedLine);
@@ -208,7 +209,7 @@ public class plannerPage extends JPanel {
         label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setVerticalAlignment(SwingConstants.CENTER);
-        label.setEnabled(false); 
+        label.setEnabled(false);
         panel.add(label, gbc);
         return panel;
     }
@@ -247,6 +248,7 @@ public class plannerPage extends JPanel {
                 cl.show(mainPanel, cardName);
                 updateActivityTableFromCard(cardName);
                 filterTableByStatus(cardName);
+                refreshCalendar(); 
             }
         });
 
@@ -319,6 +321,7 @@ public class plannerPage extends JPanel {
         int firstDay = calendar_.get(Calendar.DAY_OF_WEEK) - 1;
         int totalDays = calendar_.getActualMaximum(Calendar.DAY_OF_MONTH);
         Calendar today = Calendar.getInstance();
+        String selectedFilter = selectedButton != null ? selectedButton.getText().toLowerCase() : "all";
 
         for (int i = 0; i < firstDay; i++) {
             calendarPanel.add(new JPanel());
@@ -327,6 +330,7 @@ public class plannerPage extends JPanel {
         for (int day = 1; day <= totalDays; day++) {
             calendar_.set(Calendar.DAY_OF_MONTH, day);
             String key = sdf.format(calendar_.getTime());
+            ActivityDetails actDetail = activities.get(key);
 
             RoundedCell cell = new RoundedCell();
             cell.setLayout(new BorderLayout(0, 5));
@@ -343,8 +347,42 @@ public class plannerPage extends JPanel {
             dayLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
             cell.add(dayLabel, BorderLayout.NORTH);
 
-            if (activities.containsKey(key)) {
-                ActivityDetails actDetail = activities.get(key);
+            boolean shouldDisplay = false;
+            if (actDetail != null) {
+                switch (selectedFilter) {
+                    case "all":
+                        shouldDisplay = true;
+                        break;
+                    case "approved":
+                        shouldDisplay = "Approved".equalsIgnoreCase(actDetail.status);
+                        break;
+                    case "pending":
+                        try {
+                            Date activityDate = sdf.parse(key);
+                            shouldDisplay = "Pending".equalsIgnoreCase(actDetail.status) &&
+                                (activityDate.equals(today.getTime()) || activityDate.after(today.getTime()));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "reschedule":
+                        try {
+                            Date activityDate = sdf.parse(key);
+                            Calendar todayCal = Calendar.getInstance();
+                            todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                            todayCal.set(Calendar.MINUTE, 0);
+                            todayCal.set(Calendar.SECOND, 0);
+                            todayCal.set(Calendar.MILLISECOND, 0);
+                            Date dateOnlyToday = todayCal.getTime();
+                            shouldDisplay = "Pending".equalsIgnoreCase(actDetail.status) && activityDate.before(dateOnlyToday);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                }
+            }
+
+            if (shouldDisplay && actDetail != null) {
                 String text = "<html><center>" + actDetail.title + "</center></html>";
                 JLabel act = new JLabel(text, SwingConstants.CENTER);
                 act.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -417,7 +455,7 @@ public class plannerPage extends JPanel {
                             hasData = true;
                         }
                         break;
-                    case "resched":
+                    case "reschedule":
                         Calendar todayCal = Calendar.getInstance();
                         todayCal.set(Calendar.HOUR_OF_DAY, 0);
                         todayCal.set(Calendar.MINUTE, 0);
@@ -523,6 +561,26 @@ public class plannerPage extends JPanel {
 
         styleMiniButton(editBtn);
         styleMiniButton(delBtn);
+
+        boolean isPastDate = false;
+        try {
+            Date activityDate = sdf.parse(dateKey);
+            Calendar todayCal = Calendar.getInstance();
+            todayCal.set(Calendar.HOUR_OF_DAY, 0);
+            todayCal.set(Calendar.MINUTE, 0);
+            todayCal.set(Calendar.SECOND, 0);
+            todayCal.set(Calendar.MILLISECOND, 0);
+            Date dateOnlyToday = todayCal.getTime();
+            isPastDate = activityDate.before(dateOnlyToday);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        if (details == null && isPastDate) {
+            editBtn.setEnabled(false);
+            editBtn.setBackground(new Color(200, 200, 200));
+            editBtn.setToolTipText("Cannot add activities to past dates");
+        }
 
         editBtn.addActionListener(ev -> {
             popup.setVisible(false);
@@ -659,6 +717,25 @@ public class plannerPage extends JPanel {
             String status = (String) statusBox.getSelectedItem();
             String desc = descArea.getText().trim();
 
+            boolean isPastDate = false;
+            try {
+                Date activityDate = sdf.parse(dateKey);
+                Calendar todayCal = Calendar.getInstance();
+                todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                todayCal.set(Calendar.MINUTE, 0);
+                todayCal.set(Calendar.SECOND, 0);
+                todayCal.set(Calendar.MILLISECOND, 0);
+                Date dateOnlyToday = todayCal.getTime();
+                isPastDate = activityDate.before(dateOnlyToday);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (existing == null && isPastDate) {
+                JOptionPane.showMessageDialog(this, "Cannot add activities to past dates.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             if (!title.isEmpty() || !desc.isEmpty()) {
                 ActivityDetails details = new ActivityDetails(title, fund, status, desc);
                 activities.put(dateKey, details);
@@ -669,7 +746,56 @@ public class plannerPage extends JPanel {
             }
             loadActivitiesFromDB();
             refreshCalendar();
+
+            String cardName;
+            JButton targetButton;
+
+            if (status == null || status.isEmpty()) {
+                cardName = "all";
+                targetButton = getButtonForUnderline(allLine);
+            } else if (status.equalsIgnoreCase("Approved")) {
+                cardName = "approved";
+                targetButton = getButtonForUnderline(approvedLine);
+            } else if (status.equalsIgnoreCase("Pending")) {
+                try {
+                    Date activityDate = sdf.parse(dateKey);
+                    Calendar todayCal = Calendar.getInstance();
+                    todayCal.set(Calendar.HOUR_OF_DAY, 0);
+                    todayCal.set(Calendar.MINUTE, 0);
+                    todayCal.set(Calendar.SECOND, 0);
+                    todayCal.set(Calendar.MILLISECOND, 0);
+                    Date dateOnlyToday = todayCal.getTime();
+
+                    cardName = activityDate.before(dateOnlyToday) ? "reschedule" : "pending";
+                    targetButton = getButtonForUnderline(cardName.equals("reschedule") ? reschedLine : pendingLine);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    cardName = "all";
+                    targetButton = getButtonForUnderline(allLine);
+                }
+            } else {
+                cardName = "all";
+                targetButton = getButtonForUnderline(allLine);
+            }
+
+            if (targetButton == null) {
+                cardName = "all";
+                targetButton = getButtonForUnderline(allLine);
+            }
+
+            selectButton(targetButton);
+            CardLayout cl = (CardLayout) mainPanel.getLayout();
+            cl.show(mainPanel, cardName);
+            updateActivityTableFromCard(cardName);
+            filterTableByStatus(cardName);
         }
+    }
+
+    private JButton getButtonForUnderline(JPanel underline) {
+        return underlineMap.keySet().stream()
+                .filter(btn -> underlineMap.get(btn) == underline)
+                .findFirst()
+                .orElse(null);
     }
 
     private void styleMiniButton(JButton button) {
@@ -733,7 +859,7 @@ public class plannerPage extends JPanel {
                 if (conn == null) {
                     System.err.println("Database connection is null. Retrying...");
                     retryCount--;
-                    Thread.sleep(1000); 
+                    Thread.sleep(1000);
                     continue;
                 }
 
@@ -751,7 +877,7 @@ public class plannerPage extends JPanel {
                         );
                         activities.put(dateKey, detail);
                     }
-                    break; 
+                    break;
                 }
             } catch (SQLException e) {
                 e.printStackTrace();

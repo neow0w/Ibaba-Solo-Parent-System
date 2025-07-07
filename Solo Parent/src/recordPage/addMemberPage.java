@@ -23,9 +23,9 @@ public class addMemberPage extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private JTextField nameBar, placeofBirthBar, ageBar, birthdateBar, addressBar, emailAddBar, contactNumberBar;
-    private JTextField highestEducationalBar, occupationBar, companyNameBar, annualIncomeBar, monthlyIncomeBar, soloParentID;
+    private JTextField occupationBar, companyNameBar, soloParentID;
     private JButton cancel_backBTN, next_saveBTN;
-    private JComboBox<String> civilstatusDropdown;
+    private JComboBox<String> civilstatusDropdown, highestEducationalBar, annualIncomeBar, monthlyIncomeBar;
     private JRadioButton maleRadio;
     private JRadioButton femaleRadio;
     private ButtonGroup sexGroup;
@@ -341,20 +341,23 @@ public class addMemberPage extends JFrame {
         contactNumberBar = new JTextField();
         contactNumberBar.setBounds(260, 420, 205, 30);
         applicantPanel.add(contactNumberBar);
-        highestEducationalBar = new JTextField();
-        highestEducationalBar.setBounds(260, 495, 384, 30);
-        applicantPanel.add(highestEducationalBar);
         occupationBar = new JTextField();
         occupationBar.setBounds(260, 568, 384, 30);
         applicantPanel.add(occupationBar);
         companyNameBar = new JTextField();
         companyNameBar.setBounds(260, 630, 384, 30);
         applicantPanel.add(companyNameBar);
-        annualIncomeBar = new JTextField();
-        annualIncomeBar.setBounds(665, 630, 384, 30);
+        
+        highestEducationalBar = new JComboBox<>(new String[]{"Elementary Undergraduate", "Elementary Graduate", "Highschool Undergraduate", 
+                "Highschool Graduate", "College Undergraduate", "College Graduate"});
+        highestEducationalBar.setBounds(260, 495, 280, 30);
+        applicantPanel.add(highestEducationalBar);
+
+        annualIncomeBar = new JComboBox<>(new String[]{"10,000 below", "10,001-50,000", "50,001-100,000", "100,000 above"});
+        annualIncomeBar.setBounds(665, 630, 200, 30);
         applicantPanel.add(annualIncomeBar);
-        monthlyIncomeBar = new JTextField();
-        monthlyIncomeBar.setBounds(665, 568, 384, 30);
+        monthlyIncomeBar = new JComboBox<>(new String[]{"10,000 below", "10,001-50,000", "50,001-100,000", "100,000 above"});
+        monthlyIncomeBar.setBounds(665, 568, 200, 30);
         applicantPanel.add(monthlyIncomeBar);
 
         nameBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
@@ -364,14 +367,14 @@ public class addMemberPage extends JFrame {
         addressBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         emailAddBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         contactNumberBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-        highestEducationalBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         occupationBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
         companyNameBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-        annualIncomeBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-        monthlyIncomeBar.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
+        
         civilstatusDropdown = new JComboBox<>(new String[]{"Single", "Married"});
         civilstatusDropdown.setBounds(260, 285, 120, 25);
+        civilstatusDropdown.addActionListener(e -> {
+            classificationPanel.setCivilStatus((String) civilstatusDropdown.getSelectedItem());
+        });
         applicantPanel.add(civilstatusDropdown);
 
         maleRadio = new JRadioButton("Male");
@@ -392,7 +395,7 @@ public class addMemberPage extends JFrame {
         Age.setBounds(260, 195, 75, 17);
         applicantPanel.add(Age);
 
-        JLabel birthdate = new JLabel("Birthdate (YYYY/MM/DD):");
+        JLabel birthdate = new JLabel("Birthdate (YYYY-MM-DD):");
         birthdate.setFont(new Font("Tahoma", Font.PLAIN, 16));
         birthdate.setBounds(665, 195, 220, 17);
         applicantPanel.add(birthdate);
@@ -440,9 +443,10 @@ public class addMemberPage extends JFrame {
         next_saveBTN.addActionListener(e -> {
             if (panelIndex == 0) {
                 if (!validateApplicantPanel()) return;
+                classificationPanel.setCivilStatus((String) civilstatusDropdown.getSelectedItem());
             } else if (panelIndex == panelNames.length - 1) {
                 try {
-	                    java.lang.reflect.Method validateMethod = classificationPanel.getClass()
+                    java.lang.reflect.Method validateMethod = classificationPanel.getClass()
                             .getDeclaredMethod("validateClassificationPanel");
                     validateMethod.setAccessible(true);
                     boolean isValid = (boolean) validateMethod.invoke(classificationPanel);
@@ -493,11 +497,12 @@ public class addMemberPage extends JFrame {
                 "address VARCHAR(255), " +
                 "email_address VARCHAR(255), " +
                 "contact_num VARCHAR(15), " +
-                "highest_educ_attainment VARCHAR(255), " +
+                "highest_educ_attainment ENUM('Elementary Undergraduate', 'Elementary Graduate', 'Highschool Undergraduate', 'Highschool Graduate', \r\n"
+                + "         'College Undergraduate', 'College Graduate') NOT NULL," +
                 "occupation VARCHAR(255), " +
                 "company_name VARCHAR(255), " +
-                "monthly_income DECIMAL(15, 2), " +
-                "annual_income DECIMAL(15, 2), " +
+                "monthly_income ENUM('10,000 below', '10,001-50,000', '50,001-100,000', '100,000 above') NOT NULL," +
+                "annual_income ENUM('10,000 below', '10,001-50,000', '50,001-100,000', '100,000 above') NOT NULL," +
                 "classification VARCHAR(255), " +
                 "date_of_wedding VARCHAR(50), " +
                 "date_of_separation VARCHAR(50), " +
@@ -531,18 +536,20 @@ public class addMemberPage extends JFrame {
                     addressBar.setText(rs.getString("address"));
                     emailAddBar.setText(rs.getString("email_address"));
                     contactNumberBar.setText(rs.getString("contact_num"));
-                    highestEducationalBar.setText(rs.getString("highest_educ_attainment"));
                     occupationBar.setText(rs.getString("occupation"));
                     companyNameBar.setText(rs.getString("company_name"));
-                    monthlyIncomeBar.setText(String.valueOf(rs.getDouble("monthly_income")));
-                    annualIncomeBar.setText(String.valueOf(rs.getDouble("annual_income")));
                     soloParentID.setText(rs.getString("applicant_id"));
 
                     String sex = rs.getString("sex");
                     if ("Male".equalsIgnoreCase(sex)) maleRadio.setSelected(true);
                     else if ("Female".equalsIgnoreCase(sex)) femaleRadio.setSelected(true);
-
-                    civilstatusDropdown.setSelectedItem(rs.getString("civil_status"));
+                    
+                    String civilStatus = rs.getString("civil_status");
+                    civilstatusDropdown.setSelectedItem(civilStatus);
+                    classificationPanel.setCivilStatus(civilStatus);
+                    highestEducationalBar.setSelectedItem(rs.getString("highest_educ_attainment"));
+                    monthlyIncomeBar.setSelectedItem(rs.getString("monthly_income"));
+                    annualIncomeBar.setSelectedItem(rs.getString("annual_income"));
                 }
             }
             familyCompositionPanel.loadFamilyCompositionByApplicantId(applicantId);
@@ -555,6 +562,9 @@ public class addMemberPage extends JFrame {
 
     private void saveApplicantInformation() {
         String civilStatus = (String) civilstatusDropdown.getSelectedItem();
+        String highestEducational = (String) highestEducationalBar.getSelectedItem();
+        String annualIncome = (String) annualIncomeBar.getSelectedItem();
+        String monthlyIncome = (String) monthlyIncomeBar.getSelectedItem();
 
         try {
             java.lang.reflect.Method validateMethod = classificationPanel.getClass()
@@ -601,22 +611,11 @@ public class addMemberPage extends JFrame {
                 stmt.setString(8, addressBar.getText());
                 stmt.setString(9, emailAddBar.getText());
                 stmt.setString(10, contactNumberBar.getText());
-                stmt.setString(11, highestEducationalBar.getText());
+                stmt.setString(11, highestEducational);
                 stmt.setString(12, occupationBar.getText());
                 stmt.setString(13, companyNameBar.getText());
-
-                String monthlyIncomeText = monthlyIncomeBar.getText().replace("₱", "").trim();
-                String annualIncomeText = annualIncomeBar.getText().replace("₱", "").trim();
-
-                try {
-                    double monthly = Double.parseDouble(monthlyIncomeText);
-                    double annual = Double.parseDouble(annualIncomeText);
-                    stmt.setDouble(14, monthly);
-                    stmt.setDouble(15, annual);
-                } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(this, "Please enter valid numeric values for income.");
-                    return;
-                }
+                stmt.setString(14, monthlyIncome);
+                stmt.setString(15, annualIncome);
 
                 if (isEditMode) {
                     stmt.setString(16, editingApplicantId);
@@ -706,38 +705,13 @@ public class addMemberPage extends JFrame {
             JOptionPane.showMessageDialog(this, "Contact number must be 11 digits and contain only numbers.");
             return false;
         }
-        if (highestEducationalBar.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter your highest educational attainment.");
-            return false;
-        }
+
         if (occupationBar.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter your occupation.");
             return false;
         }
         if (companyNameBar.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter your company name.");
-            return false;
-        }
-        String annualIncomeText = annualIncomeBar.getText().trim().replace("₱", "");
-        if (annualIncomeText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter your annual income.");
-            return false;
-        }
-        try {
-            Double.parseDouble(annualIncomeText);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Annual income must be a valid number.");
-            return false;
-        }
-        String monthlyIncomeText = monthlyIncomeBar.getText().trim().replace("₱", "");
-        if (monthlyIncomeText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter your monthly income.");
-            return false;
-        }
-        try {
-            Double.parseDouble(monthlyIncomeText);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Monthly income must be a valid number.");
             return false;
         }
         return true;

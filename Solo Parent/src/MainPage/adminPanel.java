@@ -1,5 +1,6 @@
 package MainPage;
 
+import logInPage.loginPage; 
 import adminPage.contactPage;
 import javax.swing.*;
 import java.awt.*;
@@ -22,6 +23,23 @@ public class adminPanel extends JPanel {
 		support.setFont(new Font("Tahoma", Font.BOLD, 28));
 		support.setBounds(90, 23, 140, 30);
 		add(support);
+		
+		JButton logOut = new RoundedButton("Log Out");
+		logOut.setBounds(1170, 30, 150, 40);
+		logOut.setBackground(new Color(55, 55, 55));
+		logOut.setForeground(new Color(255, 64, 169));
+		logOut.setFont(new Font("Segoe UI", Font.BOLD, 18));
+		add(logOut);
+		
+		logOut.addActionListener(e -> {
+			 int choice = JOptionPane.showConfirmDialog(null, "Do you wish to log out?", "Confirmation", JOptionPane.YES_NO_OPTION);
+		     if (choice == JOptionPane.YES_OPTION){
+                 mainPage.instance.dispose();
+                 loginPage login = new loginPage();
+                 login.setLocationRelativeTo(null);
+                 login.setVisible(true);
+		     } 
+		});
 		
 		JLabel supportDescription = new JLabel("Use this section to update your password and contact support.");
 		supportDescription.setFont(new Font("Tahoma", Font.PLAIN, 16));
@@ -144,6 +162,10 @@ public class adminPanel extends JPanel {
 		                    updateStmt.setString(1, newPass);
 		                    updateStmt.executeUpdate();
 		                    JOptionPane.showMessageDialog(null, "Password updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+		                    mainPage.instance.dispose();
+		                    loginPage login = new loginPage();
+		                    login.setLocationRelativeTo(null);
+		                    login.setVisible(true);
 		                }
 		            } else {
 		                JOptionPane.showMessageDialog(null, "Admin record not found.", "Error", JOptionPane.ERROR_MESSAGE);

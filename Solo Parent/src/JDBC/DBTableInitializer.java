@@ -79,11 +79,12 @@ public class DBTableInitializer {
                 address VARCHAR(255),
                 email_address VARCHAR(255),
                 contact_num VARCHAR(15),
-                highest_educ_attainment VARCHAR(255),
+                highest_educ_attainment ENUM('Elementary Undergraduate', 'Elementary Graduate', 'Highschool Undergraduate', 'Highschool Graduate', 
+        									'College Undergraduate', 'College Graduate') NOT NULL,
                 occupation VARCHAR(255),
                 company_name VARCHAR(255),
-                monthly_income DECIMAL(15, 2),
-                annual_income DECIMAL(15, 2),
+                monthly_income ENUM('10,000 below', '10,001-50,000', '50,001-100,000', '100,000 above') NOT NULL,
+                annual_income ENUM('10,000 below', '10,001-50,000', '50,001-100,000', '100,000 above') NOT NULL,
                 classification VARCHAR(255),
                 date_of_wedding VARCHAR(50),
                 date_of_separation VARCHAR(50),
@@ -157,23 +158,23 @@ public class DBTableInitializer {
             Object[][] applicants = {
                 {"Liza Moreno", "Quezon City", 27, "1998-11-25", "Female", "Single",
                         "Blk 2 Lot 8 Tandang Sora", "liza.moreno@example.com", "09171234500",
-                        "Senior High", "Cashier", "Grocery Mart", "12000.00", "144000.00",
+                        "Highschool Undergraduate", "Cashier", "Grocery Mart", "10,001-50,000", "10,001-50,000",
                         "Unmarried, Abandoned", null, null, "", "2023-03213-SP-0"},
                 {"Ronald Vega", "Cavite", 39, "1986-05-10", "Male", "Married",
                         "Dasmariñas City", "ronald.vega@example.com", "09229998877",
-                        "College Graduate", "Technician", "ElectroFix", "25000.00", "300000.00",
+                        "College Graduate", "Technician", "ElectroFix", "10,001-50,000", "10,001-50,000",
                         "Married, Annulled", "2011-02-14", "2019-06-01", "", "2023-04214-SP-0"},
                 {"Carla Buenaventura", "Cebu City", 32, "1993-08-08", "Female", "Single",
                         "Mabolo, Cebu City", "carla.b@example.com", "09338887766",
-                        "College", "Online Seller", "", "18000.00", "216000.00",
+                        "College Undergraduate", "Online Seller", "", "10,001-50,000", "10,001-50,000",
                         "Unmarried, Death of Partner", null, null, "", "2023-31134-SP-0"},
                 {"Mark Solis", "Iloilo", 48, "1977-04-01", "Male", "Married",
                         "Jaro, Iloilo City", "marksolis@ymail.com", "09180001122",
-                        "Post Graduate", "Professor", "WVSU", "40000.00", "480000.00",
+                        "Highschool Graduate", "Professor", "WVSU", "10,001-50,000", "10,001-50,000",
                         "Married, Widow/er", "2000-05-15", null, "", "2023-12451-SP-0"},
                 {"Jennylyn Arce", "Zamboanga", 34, "1991-07-17", "Female", "Single",
                         "Ayala, Zamboanga City", "jen.arce@gmail.com", "09092224455",
-                        "Vocational", "Massage Therapist", "", "10000.00", "120000.00",
+                        "Highschool Undergraduate", "Massage Therapist", "", "10,001-50,000", "10,001-50,000",
                         "Others", null, null, "Partner imprisoned for more than 10 years", "2023-52342-SP-0"}
             };
 
@@ -194,8 +195,8 @@ public class DBTableInitializer {
                     insertStmt.setString(10, (String) a[9]);
                     insertStmt.setString(11, (String) a[10]);
                     insertStmt.setString(12, (String) a[11]);
-                    insertStmt.setBigDecimal(13, new java.math.BigDecimal((String) a[12]));
-                    insertStmt.setBigDecimal(14, new java.math.BigDecimal((String) a[13]));
+                    insertStmt.setString(13, (String) a[12]); 
+                    insertStmt.setString(14, (String) a[13]);
                     insertStmt.setString(15, (String) a[14]);
                     insertStmt.setString(16, (String) a[15]);
                     insertStmt.setString(17, (String) a[16]);

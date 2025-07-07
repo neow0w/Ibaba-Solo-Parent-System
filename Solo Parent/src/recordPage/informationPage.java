@@ -285,7 +285,7 @@ public class informationPage extends JFrame {
 
         monthlyValue = new JLabel("");
         monthlyValue.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        monthlyValue.setBounds(670, 380, 145, 20);
+        monthlyValue.setBounds(670, 380, 175, 20);
         mainPanel.add(monthlyValue);
 
         JLabel annualIncome = new JLabel("Annual Income");
@@ -295,7 +295,7 @@ public class informationPage extends JFrame {
 
         annualValue = new JLabel("");
         annualValue.setFont(new Font("Tahoma", Font.PLAIN, 18));
-        annualValue.setBounds(958, 380, 145, 20);
+        annualValue.setBounds(958, 380, 175, 20);
         mainPanel.add(annualValue);
 
         JPanel hrLine3 = new JPanel();
